@@ -55,7 +55,7 @@ app.use((_req: Request, res: Response) => {
 	});
 });
 
-app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+app.use((error: unknown, _req: Request, res: Response) => {
 	const statusCode = 500;
 	const fallbackMessage = "Internal server error.";
 	const message = error instanceof Error ? error.message : fallbackMessage;

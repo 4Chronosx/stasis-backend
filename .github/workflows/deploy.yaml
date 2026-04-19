@@ -17,4 +17,4 @@ jobs:
           version: latest
 
       - name: Run migrations
-        run: npx supabase db push --db-url ${{ secrets.DATABASE_URL }}
+        run: supabase db push --db-url ${{ secrets.DATABASE_URL }}

@@ -49,7 +49,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Lint
-        run: npx eslint src
+        run: npm run lint
 
       - name: Audit dependencies
         run: npm audit --audit-level=high

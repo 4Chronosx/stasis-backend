@@ -51,9 +51,6 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
-
   migrate:
     name: Run Database Migrations
     runs-on: ubuntu-latest

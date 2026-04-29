@@ -11,9 +11,9 @@ import { createPreferencesSchema, updatePreferencesSchema } from "./preferences.
 
 const router = Router();
 
-router.get("/", authenticated, getPreferences);
-router.post("/", authenticated, validateCsrf, validateSchema(createPreferencesSchema), createPreferences);
-router.patch("/", authenticated, validateCsrf, validateSchema(updatePreferencesSchema), updatePreferences);
-router.delete("/", authenticated, validateCsrf, deletePreferences);
+router.get("/preferences", authenticated, getPreferences);
+router.post("/preferences", authenticated, validateCsrf, validateSchema(createPreferencesSchema), createPreferences);
+router.patch("/preferences", authenticated, validateCsrf, validateSchema(updatePreferencesSchema), updatePreferences);
+router.delete("/preferences", authenticated, validateCsrf, deletePreferences);
 
 export default router;

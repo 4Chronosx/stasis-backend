@@ -1,10 +1,11 @@
 import express, { Request, Response, NextFunction } from "express";
 import { env } from "./config/env";
-
+import authRoutes from "./modules/auth/auth.routes";
+import cookieParser from "cookie-parser";
 const app = express();
 
 app.disable("x-powered-by");
-
+app.use(cookieParser());
 app.use((req: Request, res: Response, next: NextFunction) => {
 	res.setHeader("Access-Control-Allow-Origin", env.CLIENT_URL);
 	res.setHeader("Vary", "Origin");
@@ -42,7 +43,7 @@ app.get("/", (_req: Request, res: Response) => {
 // app.use("/api/auth", authRoutes);
 // app.use("/api/flashcards", flashcardsRoutes);
 // ...
-
+app.use("/auth", authRoutes);
 app.use("/api", (_req: Request, res: Response) => {
 	res.status(501).json({
 		message: "API routes are not wired yet.",

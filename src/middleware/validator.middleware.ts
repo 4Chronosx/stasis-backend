@@ -11,7 +11,7 @@ export const validateSchema = (schema: ZodObject) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       await schema.parseAsync({
-        body: req.body,
+        body: req.body as unknown,
         query: req.query,
         params: req.params,
       });

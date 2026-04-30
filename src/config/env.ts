@@ -14,6 +14,11 @@ type AppEnv = {
 	GOOGLE_CALLBACK_URL: string | undefined;
 	ANTHROPIC_API_KEY: string | undefined;
 	SESSION_SECRET: string | undefined;
+	SMTP_HOST: string | undefined;
+	SMTP_PORT: number | undefined;
+	SMTP_USER: string | undefined;
+	SMTP_PASS: string | undefined;
+	SMTP_FROM: string | undefined;
 };
 
 const DEFAULT_PORT = 3000;
@@ -41,6 +46,22 @@ function parsePort(rawPort: string | undefined): number {
 
 	if (isInvalidPort) {
 		throw new Error("Invalid PORT value. Expected an integer between 1 and 65535.");
+	}
+
+	return parsedPort;
+}
+
+function parseOptionalPort(rawPort: string | undefined): number | undefined {
+	if (!rawPort) {
+		return undefined;
+	}
+
+	const parsedPort = Number(rawPort);
+	const isInvalidPort =
+		Number.isNaN(parsedPort) || !Number.isInteger(parsedPort) || parsedPort <= 0 || parsedPort > 65535;
+
+	if (isInvalidPort) {
+		throw new Error("Invalid SMTP_PORT value. Expected an integer between 1 and 65535.");
 	}
 
 	return parsedPort;
@@ -78,6 +99,11 @@ export const env: AppEnv = Object.freeze({
 	GOOGLE_CALLBACK_URL: getOptionalEnv("GOOGLE_CALLBACK_URL"),
 	ANTHROPIC_API_KEY: getOptionalEnv("ANTHROPIC_API_KEY"),
 	SESSION_SECRET: getOptionalEnv("SESSION_SECRET"),
+	SMTP_HOST: getOptionalEnv("SMTP_HOST"),
+	SMTP_PORT: parseOptionalPort(getOptionalEnv("SMTP_PORT")),
+	SMTP_USER: getOptionalEnv("SMTP_USER"),
+	SMTP_PASS: getOptionalEnv("SMTP_PASS"),
+	SMTP_FROM: getOptionalEnv("SMTP_FROM"),
 });
 
 export const isProduction = env.NODE_ENV === "production";

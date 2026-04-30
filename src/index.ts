@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { env } from "./config/env";
 import authRoutes from "./modules/auth/auth.routes";
 import cookieParser from "cookie-parser";
+import { startStreakReminderJob } from "./modules/notifications/notifications.cron";
 const app = express();
 
 app.disable("x-powered-by");
@@ -66,4 +67,5 @@ app.use((error: unknown, _req: Request, res: Response) => {
 
 app.listen(env.PORT, () => {
 	console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+	startStreakReminderJob();
 });

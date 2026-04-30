@@ -35,9 +35,10 @@
     "express": "^5.2.1",
     "google-auth-library": "^10.6.2",
     "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0",
+    "zod": "^4.3.6",
     "node-cron": "^4.2.0",
-    "nodemailer": "^7.0.6",
-    "pg": "^8.20.0"
+    "nodemailer": "^7.0.6"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",

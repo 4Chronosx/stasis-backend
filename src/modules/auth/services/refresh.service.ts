@@ -1,7 +1,7 @@
 
 
 
-import { pool } from "../../../config/db";
+import { db } from "../../../config/db";
 
 interface RefreshTokenRow {
     user_id: string;
@@ -11,14 +11,14 @@ interface RefreshTokenRow {
 
 export const RefreshTokenService = {
     create: async ({ userId, token, expiresAt }: { userId: string, token: string, expiresAt: Date }) => {
-        await pool.query(
+        await db.query(
             `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
             [userId, token, expiresAt]
         );
     },
 
     find: async (token: string) => {
-        const { rows } = await pool.query<RefreshTokenRow>(
+        const { rows } = await db.query<RefreshTokenRow>(
             `SELECT * FROM refresh_tokens WHERE token = $1 AND expires_at > now()`,
             [token]
         );
@@ -26,14 +26,14 @@ export const RefreshTokenService = {
     },
 
     delete: async (token: string) => {
-        await pool.query(
+        await db.query(
             `DELETE FROM refresh_tokens WHERE token = $1`,
             [token]
         );
     },
 
     deleteAllForUser: async (userId: string) => {
-        await pool.query(
+        await db.query(
             `DELETE FROM refresh_tokens WHERE user_id = $1`,
             [userId]
         );

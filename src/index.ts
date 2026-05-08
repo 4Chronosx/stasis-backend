@@ -85,6 +85,10 @@ app.use("/api", (_req: Request, res: Response) => {
 	});
 });
 
+app.use('/decks', decksRouter)
+app.use('/decks/:deckId/cards', cardsRouter)
+app.use('/decks/:deckId/session', sessionsRouter)
+
 app.use((_req: Request, res: Response) => {
 	res.status(404).json({
 		message: "Route not found.",
@@ -99,9 +103,7 @@ app.use((error: unknown, _req: Request, res: Response) => {
 	res.status(statusCode).json({ message });
 });
 
-app.use('/decks', decksRouter)
-app.use('/decks/:deckId/cards', cardsRouter)
-app.use('/decks/:deckId/session', sessionsRouter)
+
 
 /*
 

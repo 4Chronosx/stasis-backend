@@ -13,6 +13,7 @@ type AppEnv = {
 	GOOGLE_CLIENT_SECRET: string | undefined;
 	GOOGLE_CALLBACK_URL: string | undefined;
 	ANTHROPIC_API_KEY: string | undefined;
+	GEMINI_API_KEY: string | undefined;
 	SESSION_SECRET: string | undefined;
 	SMTP_HOST: string | undefined;
 	SMTP_PORT: number | undefined;
@@ -98,6 +99,7 @@ export const env: AppEnv = Object.freeze({
 	GOOGLE_CLIENT_SECRET: getOptionalEnv("GOOGLE_CLIENT_SECRET"),
 	GOOGLE_CALLBACK_URL: getOptionalEnv("GOOGLE_CALLBACK_URL"),
 	ANTHROPIC_API_KEY: getOptionalEnv("ANTHROPIC_API_KEY"),
+	GEMINI_API_KEY: getOptionalEnv("GEMINI_API_KEY"),
 	SESSION_SECRET: getOptionalEnv("SESSION_SECRET"),
 	SMTP_HOST: getOptionalEnv("SMTP_HOST"),
 	SMTP_PORT: parseOptionalPort(getOptionalEnv("SMTP_PORT")),

@@ -1,5 +1,5 @@
 
-import { pool } from "../../../config/db"
+import { db } from "../../../config/db"
 
 interface ProfileRow {
     id: string;
@@ -17,7 +17,7 @@ interface GoogleUser {
 
 export const UserService = {
     upsert: async (data: GoogleUser) => {
-        const { rows } = await pool.query<ProfileRow>(
+        const { rows } = await db.query<ProfileRow>(
             `
             INSERT INTO profiles (id, full_name, email, avatar_url)
             VALUES ($1, $2, $3, $4)
@@ -34,7 +34,7 @@ export const UserService = {
     },
 
     findById: async (userId: string) => {
-        const { rows } = await pool.query<ProfileRow>(
+        const { rows } = await db.query<ProfileRow>(
             `SELECT id, full_name AS "fullname", email, avatar_url AS "pictureUrl" FROM profiles WHERE id = $1`,
             [userId]
         );

@@ -1,6 +1,6 @@
 import nodemailer, { Transporter } from "nodemailer";
 
-import { pool } from "../../config/db";
+import { db } from "../../config/db";
 import { env } from "../../config/env";
 
 interface ReminderUser {
@@ -34,7 +34,7 @@ const resolveFromAddress = (): string | null => {
 };
 
 const fetchUsersNeedingReminder = async (): Promise<ReminderUser[]> => {
-	const { rows } = await pool.query<ReminderUser>(
+	const { rows } = await db.query<ReminderUser>(
 		`
 		SELECT id, email, full_name AS "fullName"
 		FROM profiles
@@ -47,7 +47,7 @@ const fetchUsersNeedingReminder = async (): Promise<ReminderUser[]> => {
 };
 
 const markReminderSent = async (userId: string) => {
-	await pool.query(
+	await db.query(
 		`UPDATE profiles SET streak_reminder_sent_date = CURRENT_DATE WHERE id = $1`,
 		[userId]
 	);

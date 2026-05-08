@@ -1,8 +1,14 @@
 import express, { Request, Response, NextFunction } from "express";
 import { env } from "./config/env";
+import { swaggerSpec } from "./config/swagger";
 import authRoutes from "./modules/auth/auth.routes";
 import cookieParser from "cookie-parser";
+import swaggerUi from "swagger-ui-express";
 import { startStreakReminderJob } from "./modules/notifications/notifications.cron";
+import decksRouter from './modules/decks/decks.routes';
+import cardsRouter from './modules/cards/cards.routes';
+import sessionsRouter from './modules/sessions/sessions.routes';
+
 const app = express();
 
 app.disable("x-powered-by");
@@ -25,6 +31,23 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/docs.json", (_req: Request, res: Response) => {
+	res.status(200).json(swaggerSpec);
+});
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     summary: Health check
+ *     tags:
+ *       - System
+ *     responses:
+ *       "200":
+ *         description: Service is healthy
+ */
 app.get("/health", (_req: Request, res: Response) => {
 	res.status(200).json({
 		status: "ok",
@@ -33,6 +56,17 @@ app.get("/health", (_req: Request, res: Response) => {
 	});
 });
 
+/**
+ * @openapi
+ * /:
+ *   get:
+ *     summary: Service info
+ *     tags:
+ *       - System
+ *     responses:
+ *       "200":
+ *         description: Service metadata
+ */
 app.get("/", (_req: Request, res: Response) => {
 	res.status(200).json({
 		name: "STASIS Backend",
@@ -64,6 +98,26 @@ app.use((error: unknown, _req: Request, res: Response) => {
 
 	res.status(statusCode).json({ message });
 });
+
+app.use('/decks', decksRouter)
+app.use('/decks/:deckId/cards', cardsRouter)
+app.use('/decks/:deckId/session', sessionsRouter)
+
+/*
+
+GET    /decks
+POST   /decks
+GET    /decks/:id
+DELETE /decks/:id
+
+GET    /decks/:deckId/cards
+POST   /decks/:deckId/cards
+PUT    /decks/:deckId/cards/:id
+DELETE /decks/:deckId/cards/:id
+
+GET    /decks/:deckId/session
+POST   /decks/:deckId/session
+*/
 
 app.listen(env.PORT, () => {
 	console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);

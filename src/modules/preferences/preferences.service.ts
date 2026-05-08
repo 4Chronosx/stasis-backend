@@ -1,4 +1,4 @@
-import { pool } from "../../config/db";
+import { db } from "../../config/db";
 import { CreatePreferencesBody, UpdatePreferencesBody } from "./preferences.schema";
 
 interface PreferencesRow {
@@ -19,7 +19,7 @@ interface PreferencesRow {
 
 export const PreferencesService = {
   async findByUserId(userId: string): Promise<PreferencesRow | null> {
-    const { rows } = await pool.query<PreferencesRow>(
+    const { rows } = await db.query<PreferencesRow>(
       `SELECT * FROM user_preferences WHERE user_id = $1`,
       [userId]
     );
@@ -27,7 +27,7 @@ export const PreferencesService = {
   },
 
   async create(userId: string, data: CreatePreferencesBody): Promise<PreferencesRow | null> {
-    const { rows } = await pool.query<PreferencesRow>(
+    const { rows } = await db.query<PreferencesRow>(
       `INSERT INTO user_preferences (
         user_id, attention_score, adhd_score, stress_score,
         memory_score, speed_score, grit_score, motivation_score,
@@ -79,7 +79,7 @@ export const PreferencesService = {
     fields.push(`updated_at = NOW()`);
     values.push(userId);
 
-    const { rows } = await pool.query<PreferencesRow>(
+    const { rows } = await db.query<PreferencesRow>(
       `UPDATE user_preferences SET ${fields.join(", ")} WHERE user_id = $${index} RETURNING *`,
       values
     );
@@ -87,7 +87,7 @@ export const PreferencesService = {
   },
 
   async deleteByUserId(userId: string): Promise<PreferencesRow | null> {
-    const { rows } = await pool.query<PreferencesRow>(
+    const { rows } = await db.query<PreferencesRow>(
       `DELETE FROM user_preferences WHERE user_id = $1 RETURNING *`,
       [userId]
     );

@@ -83,7 +83,7 @@ const swaggerOptions = {
 			},
 		},
 	},
-	apis: ["./src/index.ts", "./src/modules/**/*.routes.ts", "./src/modules/**/*.controller.ts", "./dist/**/*.js"],
+	apis: ["./src/config/openapi.paths.yaml"],
 };
 
 export const swaggerSpec = swaggerJSDoc(swaggerOptions);

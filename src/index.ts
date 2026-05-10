@@ -1,3 +1,5 @@
+import http from "node:http";
+
 import express, { Request, Response, NextFunction } from "express";
 import { env } from "./config/env";
 import { swaggerSpec } from "./config/swagger";
@@ -5,11 +7,13 @@ import authRoutes from "./modules/auth/auth.routes";
 import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import { startStreakReminderJob } from "./modules/notifications/notifications.cron";
-import decksRouter from './modules/decks/decks.routes';
-import cardsRouter from './modules/cards/cards.routes';
-import sessionsRouter from './modules/sessions/sessions.routes';
+import decksRouter from "./modules/decks/decks.routes";
+import cardsRouter from "./modules/cards/cards.routes";
+import sessionsRouter from "./modules/sessions/sessions.routes";
+import { initializeSocket } from "./socket";
 
 const app = express();
+const server = http.createServer(app);
 
 app.disable("x-powered-by");
 app.use(cookieParser());
@@ -85,9 +89,9 @@ app.use("/api", (_req: Request, res: Response) => {
 	});
 });
 
-app.use('/decks', decksRouter)
-app.use('/decks/:deckId/cards', cardsRouter)
-app.use('/decks/:deckId/session', sessionsRouter)
+app.use("/decks", decksRouter);
+app.use("/decks/:deckId/cards", cardsRouter);
+app.use("/decks/:deckId/session", sessionsRouter);
 
 app.use((_req: Request, res: Response) => {
 	res.status(404).json({
@@ -102,8 +106,6 @@ app.use((error: unknown, _req: Request, res: Response) => {
 
 	res.status(statusCode).json({ message });
 });
-
-
 
 /*
 
@@ -121,7 +123,9 @@ GET    /decks/:deckId/session
 POST   /decks/:deckId/session
 */
 
-app.listen(env.PORT, () => {
+initializeSocket(server);
+
+server.listen(env.PORT, () => {
 	console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
 	startStreakReminderJob();
 });

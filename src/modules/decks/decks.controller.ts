@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { AuthRequest } from "../../middleware/auth.middleware";
 import * as decksService from "./decks.service";
 import { CreateDeckBody } from "./decks.schema";
 
@@ -7,9 +8,8 @@ const parseIdParam = (value: unknown): number | null => {
 	return Number.isFinite(raw) ? raw : null;
 };
 
-export async function createDeck(req: Request, res: Response) {
+export async function createDeck(req: AuthRequest, res: Response) {
 	try {
-		// File validation (cannot be done via Zod since it lives on req.file)
 		const file = req.file;
 		if (!file) {
 			return res.status(400).json({ error: "PDF file is required" });
@@ -18,12 +18,13 @@ export async function createDeck(req: Request, res: Response) {
 			return res.status(400).json({ error: "Only PDF files are accepted" });
 		}
 
-		// Body already validated by validateSchema middleware
 		const body = req.body as CreateDeckBody;
+		const userId = req.user!.userId;
 
 		const result = await decksService.createDeck(
 			file.buffer,
 			body.cardCount,
+			userId,
 			body.name,
 		);
 
@@ -35,27 +36,30 @@ export async function createDeck(req: Request, res: Response) {
 	}
 }
 
-export async function listDecks(_req: Request, res: Response) {
-	const decks = await decksService.listDecks();
+export async function listDecks(req: AuthRequest, res: Response) {
+	const userId = req.user!.userId;
+	const decks = await decksService.listDecks(userId);
 	res.json(decks);
 }
 
-export async function getDeck(req: Request, res: Response) {
+export async function getDeck(req: AuthRequest, res: Response) {
 	const params = req.params as { id?: string };
 	const deckId = parseIdParam(params.id);
 	if (deckId === null) return res.status(400).json({ error: "invalid deck id" });
 
-	const deck = await decksService.getDeck(deckId);
+	const userId = req.user!.userId;
+	const deck = await decksService.getDeck(deckId, userId);
 	if (!deck) return res.status(404).json({ error: "Deck not found" });
 	res.json(deck);
 }
 
-export async function deleteDeck(req: Request, res: Response) {
+export async function deleteDeck(req: AuthRequest, res: Response) {
 	const params = req.params as { id?: string };
 	const deckId = parseIdParam(params.id);
 	if (deckId === null) return res.status(400).json({ error: "invalid deck id" });
 
-	const deck = await decksService.getDeck(deckId);
+	const userId = req.user!.userId;
+	const deck = await decksService.getDeck(deckId, userId);
 	if (!deck) return res.status(404).json({ error: "Deck not found" });
 
 	await decksService.deleteDeck(deckId);

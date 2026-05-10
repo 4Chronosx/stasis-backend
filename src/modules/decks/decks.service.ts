@@ -22,34 +22,38 @@ type DeckRow = {
 export async function createDeck(
   pdfBuffer: Buffer,
   cardCount: number,
+  userId: string,
   name?: string,
 ) {
-  // 1. Generate deck content from the PDF via Gemini
   const generated = await generateDeck(pdfBuffer, cardCount, name);
 
-  // 2. Insert the deck row
   const { rows } = await db.query<DeckRow>(
-    `INSERT INTO decks (name, description) VALUES ($1, $2) RETURNING *`,
-    [generated.name, generated.description],
+    `INSERT INTO decks (name, description, user_id) VALUES ($1, $2, $3) RETURNING *`,
+    [generated.name, generated.description, userId],
   );
   const deck = rows[0];
   if (!deck) {
     throw new Error("Failed to insert deck row");
   }
 
-  // 3. Bulk-insert the generated cards
   const cards = await addCards(deck.id, generated.cards);
 
   return { deck, cards };
 }
 
-export async function listDecks() {
-  const { rows } = await db.query<DeckRow>(`SELECT * FROM decks ORDER BY created_at DESC`);
+export async function listDecks(userId: string) {
+  const { rows } = await db.query<DeckRow>(
+    `SELECT * FROM decks WHERE user_id = $1 ORDER BY created_at DESC`,
+    [userId],
+  );
   return rows;
 }
 
-export async function getDeck(id: number) {
-  const { rows } = await db.query<DeckRow>(`SELECT * FROM decks WHERE id = $1`, [id]);
+export async function getDeck(id: number, userId: string) {
+  const { rows } = await db.query<DeckRow>(
+    `SELECT * FROM decks WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  );
   return rows[0] ?? null;
 }
 

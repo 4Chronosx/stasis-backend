@@ -1,0 +1,476 @@
+# Auth
+/auth/csrf:
+  get:
+    summary: Get a CSRF token
+    tags:
+      - Auth
+    responses:
+      "200":
+        description: CSRF token set in cookie and returned in body
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                csrfToken:
+                  type: string
+
+/auth/google/url:
+  get:
+    summary: Get the Google OAuth authorization URL
+    tags:
+      - Auth
+    responses:
+      "200":
+        description: Google OAuth URL to redirect the user to
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+      "500":
+        description: Failed to initiate OAuth flow
+
+/auth/google/callback:
+  get:
+    summary: Google OAuth callback
+    description: Handles the OAuth redirect from Google. Sets access_token and refresh_token cookies then redirects to the frontend.
+    tags:
+      - Auth
+    parameters:
+      - in: query
+        name: code
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: state
+        required: true
+        schema:
+          type: string
+    responses:
+      "302":
+        description: Redirects to frontend on success or error
+
+/auth/google/verify:
+  get:
+    summary: Verify the current session and return user info
+    tags:
+      - Auth
+    security:
+      - cookieAuth: []
+    responses:
+      "200":
+        description: Authenticated user
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/User'
+      "401":
+        description: Unauthorized
+
+/auth/google/logout:
+  post:
+    summary: Log out the current user
+    tags:
+      - Auth
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: header
+        name: x-csrf-token
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: Logged out successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+      "401":
+        description: Unauthorized or invalid CSRF token
+
+/auth/google/refresh:
+  post:
+    summary: Refresh the access token using the refresh_token cookie
+    tags:
+      - Auth
+    responses:
+      "200":
+        description: Access token refreshed
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+      "401":
+        description: Missing, invalid, or expired refresh token
+
+/auth/token:
+  get:
+    summary: Get the current access token from cookie
+    tags:
+      - Auth
+    security:
+      - cookieAuth: []
+    responses:
+      "200":
+        description: Access token value
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                access_token:
+                  type: string
+      "401":
+        description: Unauthorized
+
+# Decks
+/decks:
+  get:
+    summary: List all decks for the authenticated user
+    tags:
+      - Decks
+    security:
+      - cookieAuth: []
+    responses:
+      "200":
+        description: Array of decks
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Deck'
+      "401":
+        description: Unauthorized
+  post:
+    summary: Create a new deck from a PDF
+    tags:
+      - Decks
+    security:
+      - cookieAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+              - file
+            properties:
+              file:
+                type: string
+                format: binary
+                description: PDF file to generate flashcards from
+              name:
+                type: string
+                description: Deck name (AI-generated if omitted)
+              cardCount:
+                type: integer
+                minimum: 1
+                maximum: 30
+                default: 10
+                description: Number of flashcards to generate
+    responses:
+      "201":
+        description: Deck created successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deck:
+                  $ref: '#/components/schemas/Deck'
+                cards:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Card'
+      "400":
+        description: Missing or invalid PDF file
+      "401":
+        description: Unauthorized
+      "500":
+        description: Internal server error
+
+/decks/{id}:
+  get:
+    summary: Get a deck by ID
+    tags:
+      - Decks
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: Deck ID
+    responses:
+      "200":
+        description: Deck found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Deck'
+      "400":
+        description: Invalid deck ID
+      "401":
+        description: Unauthorized
+      "404":
+        description: Deck not found
+  delete:
+    summary: Delete a deck by ID
+    tags:
+      - Decks
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: Deck ID
+    responses:
+      "204":
+        description: Deck deleted successfully
+      "400":
+        description: Invalid deck ID
+      "401":
+        description: Unauthorized
+      "404":
+        description: Deck not found
+
+# Cards
+/decks/{deckId}/cards:
+  get:
+    summary: List all cards in a deck
+    tags:
+      - Cards
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: path
+        name: deckId
+        required: true
+        schema:
+          type: integer
+    responses:
+      "200":
+        description: Array of cards
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Card'
+      "400":
+        description: Invalid deckId
+      "401":
+        description: Unauthorized
+  post:
+    summary: Add a card to a deck
+    tags:
+      - Cards
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: path
+        name: deckId
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - front
+              - back
+            properties:
+              front:
+                type: string
+              back:
+                type: string
+    responses:
+      "201":
+        description: Card created
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Card'
+      "400":
+        description: Invalid deckId or request body
+      "401":
+        description: Unauthorized
+
+/decks/{deckId}/cards/{id}:
+  put:
+    summary: Update a card's front or back
+    tags:
+      - Cards
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: path
+        name: deckId
+        required: true
+        schema:
+          type: integer
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              front:
+                type: string
+              back:
+                type: string
+    responses:
+      "200":
+        description: Updated card
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Card'
+      "400":
+        description: Invalid card ID or request body
+      "401":
+        description: Unauthorized
+      "404":
+        description: Card not found
+  delete:
+    summary: Delete a card
+    tags:
+      - Cards
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: path
+        name: deckId
+        required: true
+        schema:
+          type: integer
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    responses:
+      "204":
+        description: Card deleted
+      "400":
+        description: Invalid card ID
+      "401":
+        description: Unauthorized
+      "404":
+        description: Card not found
+
+# Sessions
+/decks/{deckId}/session:
+  get:
+    summary: Load due cards for a study session
+    tags:
+      - Sessions
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: path
+        name: deckId
+        required: true
+        schema:
+          type: integer
+    responses:
+      "200":
+        description: Due cards with FSRS interval previews
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cards:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SessionCard'
+      "400":
+        description: Invalid deckId
+      "401":
+        description: Unauthorized
+  post:
+    summary: Submit reviews for a completed session
+    tags:
+      - Sessions
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: path
+        name: deckId
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - reviews
+            properties:
+              reviews:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - cardId
+                    - rating
+                    - reviewedAt
+                  properties:
+                    cardId:
+                      type: integer
+                    rating:
+                      type: integer
+                      minimum: 1
+                      maximum: 4
+                      description: "1=Again, 2=Hard, 3=Good, 4=Easy"
+                    reviewedAt:
+                      type: string
+                      format: date-time
+    responses:
+      "200":
+        description: Number of reviews saved
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                saved:
+                  type: integer
+      "400":
+        description: Invalid reviews array or rating value
+      "401":
+        description: Unauthorized

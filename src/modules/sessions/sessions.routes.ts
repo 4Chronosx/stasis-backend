@@ -3,7 +3,7 @@ import * as sessionsController from './sessions.controller'
 
 const router = Router({ mergeParams: true })
 
-router.get('/',    sessionsController.loadSession)
-router.post('/',   sessionsController.submitSession)
+router.get('/', sessionsController.loadSession)
+router.post('/', sessionsController.submitSession)
 
 export default router

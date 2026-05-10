@@ -1,4 +1,5 @@
 import multer from "multer";
+import { RequestHandler } from "express";
 
 /**
  * Multer middleware for handling file uploads.
@@ -16,4 +17,4 @@ const upload = multer({
 	},
 });
 
-export const uploadPdf = upload.single("pdf");
+export const uploadPdf: RequestHandler = upload.single("pdf");

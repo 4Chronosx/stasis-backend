@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { ParsedQs } from "qs";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
 export interface AccessTokenPayload extends JwtPayload {
@@ -20,7 +19,7 @@ export type CookieRequest<
   P = Record<string, string>,
   ResBody = unknown,
   ReqBody = unknown,
-  ReqQuery = ParsedQs,
+  ReqQuery = Record<string, unknown>,
 > = Request<P, ResBody, ReqBody, ReqQuery> & { cookies: RequestCookies };
 
 export type AuthRequest = CookieRequest & { user?: AccessTokenPayload };

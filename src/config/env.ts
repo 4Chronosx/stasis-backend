@@ -23,7 +23,7 @@ type AppEnv = {
 };
 
 const DEFAULT_PORT = 3000;
-const DEFAULT_CLIENT_URL = "http://localhost:3001";
+const DEFAULT_CLIENT_URL = "http://localhost:3000";
 
 function getOptionalEnv(key: string): string | undefined {
 	const value = process.env[key];

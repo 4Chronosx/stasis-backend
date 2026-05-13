@@ -1,15 +1,10 @@
 import { IncomingMessage, Server as HttpServer } from "node:http";
 
-import { RequestHandler } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 import { Server } from "socket.io";
 
 import { env } from "./config/env";
-
-export interface EmotionSession {
-	buffer: string[];
-	cooldowns: Map<string, number>;
-	streak: number;
-}
+import { EmotionSession } from "./types";
 
 type SocketSessionRequest = IncomingMessage & {
 	session?: {
@@ -33,7 +28,13 @@ export const initializeSocket = (
 	});
 
 	if (sessionMiddleware) {
-		io.engine.use(sessionMiddleware);
+		io.engine.use((req: IncomingMessage, res: Response, next: NextFunction) => {
+			sessionMiddleware(
+				req as Request,
+				res,
+				next,
+			);
+		});
 	}
 
 	io.use((socket, next) => {

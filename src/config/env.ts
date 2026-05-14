@@ -15,6 +15,7 @@ type AppEnv = {
 	ANTHROPIC_API_KEY: string | undefined;
 	GEMINI_API_KEY: string | undefined;
 	SESSION_SECRET: string | undefined;
+	JWT_SECRET: string | undefined;
 	SMTP_HOST: string | undefined;
 	SMTP_PORT: number | undefined;
 	SMTP_USER: string | undefined;
@@ -101,6 +102,7 @@ export const env: AppEnv = Object.freeze({
 	ANTHROPIC_API_KEY: getOptionalEnv("ANTHROPIC_API_KEY"),
 	GEMINI_API_KEY: getOptionalEnv("GEMINI_API_KEY"),
 	SESSION_SECRET: getOptionalEnv("SESSION_SECRET"),
+	JWT_SECRET: getOptionalEnv("JWT_SECRET"),
 	SMTP_HOST: getOptionalEnv("SMTP_HOST"),
 	SMTP_PORT: parseOptionalPort(getOptionalEnv("SMTP_PORT")),
 	SMTP_USER: getOptionalEnv("SMTP_USER"),

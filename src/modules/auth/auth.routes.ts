@@ -11,7 +11,7 @@ import { authenticated } from "../../middleware/auth.middleware";
 import { validateCsrf } from "../../middleware/auth.middleware"; 
 // import { authLimiter } from "../../middleware/auth.middleware"; 
 
-const router = Router();
+const router: Router = Router();
 
 router.get("/csrf", csrfToken);
 

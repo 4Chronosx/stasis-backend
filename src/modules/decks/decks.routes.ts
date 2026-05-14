@@ -5,7 +5,7 @@ import { authenticated } from "../../middleware/auth.middleware";
 import { createDeckSchema } from "./decks.schema";
 import * as decksController from "./decks.controller";
 
-const router = Router();
+const router: Router = Router();
 
 router.use(authenticated);
 

@@ -11,7 +11,7 @@ const parseIdParam = (value: unknown): number | null => {
 const parseRating = (value: unknown): Grade | null => {
   const normalized = typeof value === 'string' ? Number(value) : value
   if (normalized === 1 || normalized === 2 || normalized === 3 || normalized === 4) {
-    return normalized as Grade
+    return normalized
   }
   return null
 }

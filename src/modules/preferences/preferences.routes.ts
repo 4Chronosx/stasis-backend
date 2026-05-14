@@ -9,7 +9,7 @@ import { authenticated, validateCsrf } from "../../middleware/auth.middleware";
 import { validateSchema } from "../../middleware/validator.middleware";
 import { createPreferencesSchema, updatePreferencesSchema } from "./preferences.schema";
 
-const router = Router();
+const router: Router = Router();
 
 router.get("/preferences", authenticated, getPreferences);
 router.post("/preferences", authenticated, validateCsrf, validateSchema(createPreferencesSchema), createPreferences);

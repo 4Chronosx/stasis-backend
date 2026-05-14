@@ -20,6 +20,13 @@ type CardRow = {
 type CardUpdate = Card & { id: number };
 type ReviewLogEntry = ReviewLog & { cardId: number };
 
+export class SessionCardAccessError extends Error {
+  constructor() {
+    super('One or more reviewed cards were not found in this deck')
+    this.name = 'SessionCardAccessError'
+  }
+}
+
 const toDate = (value: string | Date): Date => (value instanceof Date ? value : new Date(value));
 
 const toFsrsCard = (row: CardRow): Card => {
@@ -39,10 +46,16 @@ const toFsrsCard = (row: CardRow): Card => {
   }
 }
 
-export async function loadSession(deckId: number) {
+export async function loadSession(deckId: number, userId: string) {
   const { rows } = await db.query<CardRow>(
-    `SELECT * FROM cards WHERE deck_id = $1 AND due <= NOW() ORDER BY due ASC`,
-    [deckId]
+    `SELECT c.*
+     FROM cards c
+     INNER JOIN decks d ON d.id = c.deck_id
+     WHERE c.deck_id = $1
+      AND d.user_id = $2
+      AND c.due <= NOW()
+     ORDER BY c.due ASC`,
+    [deckId, userId]
   )
 
   const now = new Date()
@@ -73,12 +86,21 @@ export type Review = {
   reviewedAt: string
 }
 
-export async function submitSession(reviews: Review[]) {
-  const cardIds = reviews.map(r => r.cardId)
+export async function submitSession(deckId: number, userId: string, reviews: Review[]) {
+  const cardIds = [...new Set(reviews.map(r => r.cardId))]
   const { rows } = await db.query<CardRow>(
-    `SELECT * FROM cards WHERE id = ANY($1)`,
-    [cardIds]
+    `SELECT c.*
+     FROM cards c
+     INNER JOIN decks d ON d.id = c.deck_id
+     WHERE c.deck_id = $1
+      AND d.user_id = $2
+      AND c.id = ANY($3::int[])`,
+    [deckId, userId, cardIds]
   )
+
+  if (rows.length !== cardIds.length) {
+    throw new SessionCardAccessError()
+  }
 
   const cardMap = new Map<number, Card>(rows.map(row => [row.id, toFsrsCard(row)]))
 
@@ -110,12 +132,12 @@ export async function submitSession(reviews: Review[]) {
         due = $1, stability = $2, difficulty = $3,
         scheduled_days = $4,
         reps = $5, lapses = $6, state = $7, last_review = $8
-        WHERE id = $9`,
+        WHERE id = $9 AND deck_id = $10`,
         [
           card.due, card.stability, card.difficulty,
           card.scheduled_days,
           card.reps, card.lapses, card.state, card.last_review ?? null,
-          card.id
+          card.id, deckId
         ]
       )
     }

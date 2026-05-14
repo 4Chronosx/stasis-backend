@@ -1,4 +1,6 @@
-import { Request, Response } from 'express'
+import { Response } from 'express'
+import { rateLimitConfig } from '../../config/rateLimits'
+import { AuthRequest } from '../../middleware/auth.middleware'
 import * as sessionsService from './sessions.service'
 import type { Review } from './sessions.service'
 import type { Grade } from 'ts-fsrs'
@@ -11,7 +13,7 @@ const parseIdParam = (value: unknown): number | null => {
 const parseRating = (value: unknown): Grade | null => {
   const normalized = typeof value === 'string' ? Number(value) : value
   if (normalized === 1 || normalized === 2 || normalized === 3 || normalized === 4) {
-    return normalized as Grade
+    return normalized
   }
   return null
 }
@@ -23,6 +25,7 @@ const parseReview = (value: unknown): Review | null => {
   if (record.cardId === undefined || record.cardId === null) return null
   if (record.rating === undefined || record.rating === null) return null
   if (typeof record.reviewedAt !== 'string' || record.reviewedAt.trim().length === 0) return null
+  if (Number.isNaN(new Date(record.reviewedAt).getTime())) return null
 
   const cardId = parseIdParam(record.cardId)
   if (cardId === null) return null
@@ -37,19 +40,30 @@ const parseReview = (value: unknown): Review | null => {
   }
 }
 
-export async function loadSession(req: Request, res: Response) {
+export async function loadSession(req: AuthRequest, res: Response) {
   const params = req.params as { deckId?: string }
   const deckId = parseIdParam(params.deckId)
   if (deckId === null) return res.status(400).json({ error: 'invalid deckId' });
 
-  const cards = await sessionsService.loadSession(deckId);
+  const userId = req.user!.userId
+  const cards = await sessionsService.loadSession(deckId, userId);
   res.json({ cards })
 }
 
-export async function submitSession(req: Request, res: Response) {
+export async function submitSession(req: AuthRequest, res: Response) {
+  const params = req.params as { deckId?: string }
+  const deckId = parseIdParam(params.deckId)
+  if (deckId === null) return res.status(400).json({ error: 'invalid deckId' });
+
   const body = req.body as { reviews?: unknown }
   if (!Array.isArray(body.reviews) || body.reviews.length === 0) {
     return res.status(400).json({ error: 'reviews array is required' });
+  }
+
+  if (body.reviews.length > rateLimitConfig.sessionReviews.maxReviewsPerRequest) {
+    return res.status(413).json({
+      error: `reviews array cannot exceed ${rateLimitConfig.sessionReviews.maxReviewsPerRequest} entries`,
+    });
   }
 
   const reviews: Review[] = []
@@ -74,6 +88,15 @@ export async function submitSession(req: Request, res: Response) {
     reviews.push(parsed)
   }
 
-  const result = await sessionsService.submitSession(reviews);
-  res.json(result);
+  try {
+    const userId = req.user!.userId
+    const result = await sessionsService.submitSession(deckId, userId, reviews);
+    res.json(result);
+  } catch (error) {
+    if (error instanceof sessionsService.SessionCardAccessError) {
+      return res.status(404).json({ error: error.message });
+    }
+
+    throw error;
+  }
 }

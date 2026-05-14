@@ -8,8 +8,14 @@ import { startStreakReminderJob } from "./modules/notifications/notifications.cr
 import decksRouter from './modules/decks/decks.routes';
 import cardsRouter from './modules/cards/cards.routes';
 import sessionsRouter from './modules/sessions/sessions.routes';
+import { describeRateLimitConfig, rateLimitConfig } from "./config/rateLimits";
+import { docsLimiter, globalLimiter, publicLimiter } from "./middleware/rateLimiter.middleware";
 
 const app = express();
+
+if (rateLimitConfig.trustProxyHops) {
+	app.set("trust proxy", rateLimitConfig.trustProxyHops);
+}
 
 app.disable("x-powered-by");
 app.use(cookieParser());
@@ -28,14 +34,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 	next();
 });
 
+app.use(globalLimiter);
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/docs.json", (_req: Request, res: Response) => {
+app.get("/docs.json", docsLimiter, (_req: Request, res: Response) => {
 	res.status(200).json(swaggerSpec);
 });
 
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/docs", docsLimiter, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 /**
  * @openapi
@@ -48,7 +55,7 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
  *       "200":
  *         description: Service is healthy
  */
-app.get("/health", (_req: Request, res: Response) => {
+app.get("/health", publicLimiter, (_req: Request, res: Response) => {
 	res.status(200).json({
 		status: "ok",
 		environment: env.NODE_ENV,
@@ -67,7 +74,7 @@ app.get("/health", (_req: Request, res: Response) => {
  *       "200":
  *         description: Service metadata
  */
-app.get("/", (_req: Request, res: Response) => {
+app.get("/", publicLimiter, (_req: Request, res: Response) => {
 	res.status(200).json({
 		name: "STASIS Backend",
 		status: "running",
@@ -123,5 +130,6 @@ POST   /decks/:deckId/session
 
 app.listen(env.PORT, () => {
 	console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+	console.log("[RATE_LIMIT] Active configuration:", JSON.stringify(describeRateLimitConfig()));
 	startStreakReminderJob();
 });

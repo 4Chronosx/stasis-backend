@@ -18,16 +18,28 @@ interface PreferencesRow {
   grit_score: number;
   motivation_score: number;
   adaptive_params: Record<string, unknown>;
-  runtime_preferences: RuntimePreferences | null;
-  onboarding_snapshot: RuntimePreferences | null;
+  privacy_comfort: string | null;
+  expression_tolerance: string | null;
+  study_block_length: number | null;
+  mini_breaks_per_session: number | null;
+  recovery_duration: number | null;
+  break_mechanic: string | null;
+  show_timer: boolean | null;
   onboarding_completed: boolean;
+  onboarding_completed_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
 interface RuntimePreferencesRow {
-  runtime_preferences: unknown;
-  onboarding_snapshot: unknown;
+  privacy_comfort: unknown;
+  expression_tolerance: unknown;
+  study_block_length: unknown;
+  mini_breaks_per_session: unknown;
+  recovery_duration: unknown;
+  break_mechanic: unknown;
+  show_timer: unknown;
+  onboarding_completed_at: string | null;
   updated_at: string;
 }
 
@@ -39,6 +51,18 @@ export interface RuntimePreferencesResponse {
 }
 
 const MISSING_RUNTIME_SCHEMA_CODES = new Set(["42703", "42P01"]);
+
+const RUNTIME_PREFERENCE_COLUMNS = `
+  privacy_comfort,
+  expression_tolerance,
+  study_block_length,
+  mini_breaks_per_session,
+  recovery_duration,
+  break_mechanic,
+  show_timer,
+  onboarding_completed_at,
+  updated_at
+`;
 
 export class RuntimePreferencesStorageUnavailableError extends Error {
   constructor() {
@@ -68,7 +92,6 @@ function normalizeRuntimePreferences(value: unknown): RuntimePreferences {
   };
 
   if (candidate.privacy_comfort === "off") {
-    candidate.emotion_detection = false;
     candidate.break_mechanic = "relaxed";
   }
 
@@ -76,7 +99,27 @@ function normalizeRuntimePreferences(value: unknown): RuntimePreferences {
   return result.success ? result.data : DEFAULT_RUNTIME_PREFERENCES;
 }
 
-function toRuntimeResponse(row: RuntimePreferencesRow | null): RuntimePreferencesResponse {
+function runtimePreferencesFromRow(
+  row: RuntimePreferencesRow | null
+): RuntimePreferences {
+  if (!row) {
+    return DEFAULT_RUNTIME_PREFERENCES;
+  }
+
+  return normalizeRuntimePreferences({
+    privacy_comfort: row.privacy_comfort,
+    expression_tolerance: row.expression_tolerance,
+    study_block_length: row.study_block_length,
+    mini_breaks_per_session: row.mini_breaks_per_session,
+    recovery_duration: row.recovery_duration,
+    break_mechanic: row.break_mechanic,
+    show_timer: row.show_timer,
+  });
+}
+
+function toRuntimeResponse(
+  row: RuntimePreferencesRow | null
+): RuntimePreferencesResponse {
   if (!row) {
     return {
       preferences: DEFAULT_RUNTIME_PREFERENCES,
@@ -87,13 +130,23 @@ function toRuntimeResponse(row: RuntimePreferencesRow | null): RuntimePreference
   }
 
   return {
-    preferences: normalizeRuntimePreferences(row.runtime_preferences),
-    onboarding_snapshot: row.onboarding_snapshot
-      ? normalizeRuntimePreferences(row.onboarding_snapshot)
-      : null,
+    preferences: runtimePreferencesFromRow(row),
+    onboarding_snapshot: null,
     updated_at: row.updated_at,
     storage_available: true,
   };
+}
+
+function runtimePreferenceValues(preferences: RuntimePreferences) {
+  return [
+    preferences.privacy_comfort,
+    preferences.expression_tolerance,
+    preferences.study_block_length,
+    preferences.mini_breaks_per_session,
+    preferences.recovery_duration,
+    preferences.break_mechanic,
+    preferences.show_timer,
+  ];
 }
 
 export const PreferencesService = {
@@ -105,10 +158,12 @@ export const PreferencesService = {
     return rows[0] ?? null;
   },
 
-  async findRuntimeByUserId(userId: string): Promise<RuntimePreferencesResponse> {
+  async findRuntimeByUserId(
+    userId: string
+  ): Promise<RuntimePreferencesResponse> {
     try {
       const { rows } = await db.query<RuntimePreferencesRow>(
-        `SELECT runtime_preferences, onboarding_snapshot, updated_at
+        `SELECT ${RUNTIME_PREFERENCE_COLUMNS}
          FROM user_preferences
          WHERE user_id = $1`,
         [userId]
@@ -133,18 +188,31 @@ export const PreferencesService = {
     userId: string,
     preferences: RuntimePreferences
   ): Promise<RuntimePreferencesResponse> {
-    const payload = JSON.stringify(preferences);
-
     try {
       const { rows } = await db.query<RuntimePreferencesRow>(
-        `INSERT INTO user_preferences (user_id, runtime_preferences)
-         VALUES ($1, $2)
+        `INSERT INTO user_preferences (
+           user_id,
+           privacy_comfort,
+           expression_tolerance,
+           study_block_length,
+           mini_breaks_per_session,
+           recovery_duration,
+           break_mechanic,
+           show_timer
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (user_id)
          DO UPDATE SET
-           runtime_preferences = EXCLUDED.runtime_preferences,
+           privacy_comfort = EXCLUDED.privacy_comfort,
+           expression_tolerance = EXCLUDED.expression_tolerance,
+           study_block_length = EXCLUDED.study_block_length,
+           mini_breaks_per_session = EXCLUDED.mini_breaks_per_session,
+           recovery_duration = EXCLUDED.recovery_duration,
+           break_mechanic = EXCLUDED.break_mechanic,
+           show_timer = EXCLUDED.show_timer,
            updated_at = NOW()
-         RETURNING runtime_preferences, onboarding_snapshot, updated_at`,
-        [userId, payload]
+         RETURNING ${RUNTIME_PREFERENCE_COLUMNS}`,
+        [userId, ...runtimePreferenceValues(preferences)]
       );
 
       return toRuntimeResponse(rows[0] ?? null);
@@ -161,28 +229,38 @@ export const PreferencesService = {
     userId: string,
     preferences: RuntimePreferences
   ): Promise<RuntimePreferencesResponse> {
-    const payload = JSON.stringify(preferences);
-
     try {
       const { rows } = await db.query<RuntimePreferencesRow>(
         `INSERT INTO user_preferences (
            user_id,
-           runtime_preferences,
-           onboarding_snapshot,
-           onboarding_completed
+           privacy_comfort,
+           expression_tolerance,
+           study_block_length,
+           mini_breaks_per_session,
+           recovery_duration,
+           break_mechanic,
+           show_timer,
+           onboarding_completed,
+           onboarding_completed_at
          )
-         VALUES ($1, $2, $2, TRUE)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, NOW())
          ON CONFLICT (user_id)
          DO UPDATE SET
-           runtime_preferences = EXCLUDED.runtime_preferences,
-           onboarding_snapshot = COALESCE(
-             user_preferences.onboarding_snapshot,
-             EXCLUDED.onboarding_snapshot
-           ),
+           privacy_comfort = EXCLUDED.privacy_comfort,
+           expression_tolerance = EXCLUDED.expression_tolerance,
+           study_block_length = EXCLUDED.study_block_length,
+           mini_breaks_per_session = EXCLUDED.mini_breaks_per_session,
+           recovery_duration = EXCLUDED.recovery_duration,
+           break_mechanic = EXCLUDED.break_mechanic,
+           show_timer = EXCLUDED.show_timer,
            onboarding_completed = TRUE,
+           onboarding_completed_at = COALESCE(
+             user_preferences.onboarding_completed_at,
+             EXCLUDED.onboarding_completed_at
+           ),
            updated_at = NOW()
-         RETURNING runtime_preferences, onboarding_snapshot, updated_at`,
-        [userId, payload]
+         RETURNING ${RUNTIME_PREFERENCE_COLUMNS}`,
+        [userId, ...runtimePreferenceValues(preferences)]
       );
 
       return toRuntimeResponse(rows[0] ?? null);
@@ -195,7 +273,10 @@ export const PreferencesService = {
     }
   },
 
-  async create(userId: string, data: CreatePreferencesBody): Promise<PreferencesRow | null> {
+  async create(
+    userId: string,
+    data: CreatePreferencesBody
+  ): Promise<PreferencesRow | null> {
     const { rows } = await db.query<PreferencesRow>(
       `INSERT INTO user_preferences (
         user_id, attention_score, adhd_score, stress_score,
@@ -219,7 +300,10 @@ export const PreferencesService = {
     return rows[0] ?? null;
   },
 
-  async update(userId: string, data: UpdatePreferencesBody): Promise<PreferencesRow | null> {
+  async update(
+    userId: string,
+    data: UpdatePreferencesBody
+  ): Promise<PreferencesRow | null> {
     const fields: string[] = [];
     const values: unknown[] = [];
     let index = 1;

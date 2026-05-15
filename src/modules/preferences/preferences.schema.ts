@@ -4,27 +4,16 @@ const scoreField = z.number().int().min(0).max(100);
 
 export const runtimePreferencesSchema = z.object({
   privacy_comfort: z.enum(["visible", "hidden", "off"]),
-  emotion_detection: z.boolean(),
   expression_tolerance: z.enum(["neutral", "intense", "variable"]),
-  study_block_length: z.number().int().min(15).max(90),
-  mini_breaks_per_session: z.number().int().min(1).max(3),
+  study_block_length: z.number().int().min(5).max(120),
+  mini_breaks_per_session: z.number().int().min(1).max(10),
   break_mechanic: z.enum(["relaxed", "accountable"]),
-  recovery_duration: z.number().int().min(3).max(30),
+  recovery_duration: z.number().int().min(5).max(30),
   show_timer: z.boolean(),
-}).refine(
-  (data) =>
-    data.privacy_comfort !== "off" ||
-    (!data.emotion_detection && data.break_mechanic === "relaxed"),
-  {
-    message:
-      "Camera-off preferences must disable emotion detection and use relaxed breaks",
-    path: ["privacy_comfort"],
-  },
-);
+});
 
 export const DEFAULT_RUNTIME_PREFERENCES: RuntimePreferences = {
   privacy_comfort: "off",
-  emotion_detection: false,
   expression_tolerance: "neutral",
   study_block_length: 25,
   mini_breaks_per_session: 2,

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticated } from '../../middleware/auth.middleware';
+import { emotionSessionStartRateLimiter } from '../../middleware/rateLimiter.middleware';
 import { snapshotRateLimiter } from '../../middleware/snapshotRateLimiter.middleware';
 import { validateSchema } from '../../middleware/validator.middleware';
 import * as emotionController from './emotion.controller';
@@ -17,7 +18,7 @@ const router: Router = Router();
 
 router.use(authenticated);
 
-router.post('/sessions/start', validateSchema(startSessionSchema), emotionController.startSession);
+router.post('/sessions/start', emotionSessionStartRateLimiter, validateSchema(startSessionSchema), emotionController.startSession);
 router.post(
 	'/sessions/:sessionId/data',
 	snapshotRateLimiter,

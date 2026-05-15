@@ -6,14 +6,16 @@ import type { SessionParams, SubmitSessionBody } from './sessions.schema'
 export async function loadSession(req: AuthRequest, res: Response) {
   const params = req.params as unknown as SessionParams
   const deckId = params.deckId
+  const userId = req.user!.userId
 
-  const cards = await sessionsService.loadSession(deckId);
+  const cards = await sessionsService.loadSession(deckId, userId);
   res.json({ cards })
 }
 
 export async function submitSession(req: AuthRequest, res: Response) {
+  const params = req.params as unknown as SessionParams
   const body = req.body as SubmitSessionBody
   const profileId = req.user!.userId
-  const result = await sessionsService.submitSession(body.reviews, profileId);
+  const result = await sessionsService.submitSession(body.reviews, profileId, params.deckId);
   res.json(result);
 }

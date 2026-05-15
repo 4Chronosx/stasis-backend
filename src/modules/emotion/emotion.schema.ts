@@ -14,11 +14,11 @@ const toNumber = (value: unknown) => {
   return undefined;
 };
 
-const positiveIntFromQuery = z
+const positiveIntFromQuery = (max?: number) => z
   .preprocess((value) => {
     const parsed = toNumber(value);
     return parsed !== undefined && parsed > 0 ? parsed : undefined;
-  }, z.number().int().positive())
+  }, max === undefined ? z.number().int().positive() : z.number().int().positive().max(max))
   .optional();
 
 const nonNegativeIntFromQuery = z
@@ -67,7 +67,7 @@ export const addSnapshotsSchema = z.object({
     sessionId: z.string().min(1),
   }),
   body: z.object({
-    snapshots: z.array(snapshotSchema).min(1),
+    snapshots: z.array(snapshotSchema).min(1).max(100),
   }),
 });
 
@@ -105,7 +105,7 @@ export const listHistorySchema = z.object({
         return sessionTypeValues.includes(value as SessionType) ? value : undefined;
       }, z.enum(sessionTypeValues))
       .optional(),
-    limit: positiveIntFromQuery.default(50),
+    limit: positiveIntFromQuery(100).default(50),
     offset: nonNegativeIntFromQuery.default(0),
   }),
 });
@@ -121,7 +121,7 @@ export const getTrendsSchema = z.object({
       }, z.enum(trendGranularityValues))
       .optional()
       .default("daily"),
-    days: positiveIntFromQuery.default(30),
+    days: positiveIntFromQuery(365).default(30),
   }),
 });
 

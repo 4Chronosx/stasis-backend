@@ -18,6 +18,7 @@ type AppEnv = {
 	JWT_SECRET: string | undefined;
 	RESEND_API_KEY: string | undefined;
 	RESEND_FROM: string | undefined;
+	RATE_LIMITS_ENABLED: boolean;
 };
 
 const DEFAULT_PORT = 3000;
@@ -86,6 +87,7 @@ export const env: AppEnv = Object.freeze({
 	JWT_SECRET: getOptionalEnv("JWT_SECRET"),
 	RESEND_API_KEY: getOptionalEnv("RESEND_API_KEY"),
 	RESEND_FROM: getOptionalEnv("RESEND_FROM"),
+	RATE_LIMITS_ENABLED: parseBoolean(getOptionalEnv("RATE_LIMITS_ENABLED"), true),
 });
 
 export const isProduction = env.NODE_ENV === "production";

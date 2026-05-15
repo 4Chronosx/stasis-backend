@@ -17,7 +17,7 @@ type CardRow = {
   last_review: string | Date | null;
 };
 
-export async function addCard(deckId: number, front: string, back: string) {
+export async function addCard(deckId: number, userId: string, front: string, back: string) {
   const fsrsCard = createEmptyCard();
 
   const { rows } = await db.query<CardRow>(
@@ -25,16 +25,20 @@ export async function addCard(deckId: number, front: string, back: string) {
       deck_id, front, back,
       due, stability, difficulty, scheduled_days,
       reps, lapses, state, last_review
-    ) VALUES (
+    ) SELECT
       $1, $2, $3, $4,
       $5, $6, $7,
       $8, $9,
       $10, $11
-    ) RETURNING *`,
+    WHERE EXISTS (
+      SELECT 1 FROM decks WHERE id = $1 AND user_id = $12
+    )
+    RETURNING *`,
     [
       deckId, front, back,
       fsrsCard.due, fsrsCard.stability, fsrsCard.difficulty, fsrsCard.scheduled_days,
       fsrsCard.reps, fsrsCard.lapses, fsrsCard.state, fsrsCard.last_review ?? null,
+      userId,
     ]
   );
   return rows[0] ?? null;
@@ -82,27 +86,58 @@ export async function addCards(deckId: number, cards: { question: string; answer
   return rows;
 }
 
-export async function listCards(deckId: number) {
+export async function listCards(deckId: number, userId: string) {
   const { rows } = await db.query<CardRow>(
-    `SELECT * FROM cards WHERE deck_id = $1 ORDER BY due ASC`,
-    [deckId]
+    `SELECT c.* FROM cards c
+     JOIN decks d ON d.id = c.deck_id
+     WHERE c.deck_id = $1 AND d.user_id = $2
+     ORDER BY c.due ASC`,
+    [deckId, userId]
   );
   return rows;
 }
 
-export async function getCard(id: number) {
-  const { rows } = await db.query<CardRow>(`SELECT * FROM cards WHERE id = $1`, [id]);
-  return rows[0] ?? null;
-}
-
-export async function updateCard(id: number, front: string, back: string) {
+export async function getCard(id: number, deckId: number, userId: string) {
   const { rows } = await db.query<CardRow>(
-    `UPDATE cards SET front = $1, back = $2 WHERE id = $3 RETURNING *`,
-    [front, back, id]
+    `SELECT c.* FROM cards c
+     JOIN decks d ON d.id = c.deck_id
+     WHERE c.id = $1 AND c.deck_id = $2 AND d.user_id = $3`,
+    [id, deckId, userId]
   );
   return rows[0] ?? null;
 }
 
-export async function deleteCard(id: number) {
-  await db.query(`DELETE FROM cards WHERE id = $1`, [id]);
+export async function updateCard(
+  id: number,
+  deckId: number,
+  userId: string,
+  front?: string,
+  back?: string,
+) {
+  const { rows } = await db.query<CardRow>(
+    `UPDATE cards c
+     SET front = COALESCE($4::text, c.front),
+         back = COALESCE($5::text, c.back)
+     FROM decks d
+     WHERE c.id = $1
+       AND c.deck_id = $2
+       AND d.id = c.deck_id
+       AND d.user_id = $3
+     RETURNING c.*`,
+    [id, deckId, userId, front ?? null, back ?? null]
+  );
+  return rows[0] ?? null;
+}
+
+export async function deleteCard(id: number, deckId: number, userId: string) {
+  const { rowCount } = await db.query(
+    `DELETE FROM cards c
+     USING decks d
+     WHERE c.id = $1
+       AND c.deck_id = $2
+       AND d.id = c.deck_id
+       AND d.user_id = $3`,
+    [id, deckId, userId]
+  );
+  return rowCount != null && rowCount > 0;
 }

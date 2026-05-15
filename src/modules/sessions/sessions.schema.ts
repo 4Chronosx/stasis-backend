@@ -35,7 +35,7 @@ export const submitSessionSchema = z.object({
     deckId: intParam,
   }),
   body: z.object({
-    reviews: z.array(reviewSchema).min(1),
+    reviews: z.array(reviewSchema).min(1).max(200),
   }),
 });
 

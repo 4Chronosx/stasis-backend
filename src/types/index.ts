@@ -12,6 +12,7 @@ export type AppSession = {
 export type EmotionSession = {
 	buffer: string[];
 	cooldowns: Map<string, number>;
+	frameTimestamps: number[];
 	streak: number;
 };
 

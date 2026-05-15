@@ -55,6 +55,6 @@ export async function deleteDeck(req: AuthRequest, res: Response) {
 	const deck = await decksService.getDeck(deckId, userId);
 	if (!deck) return res.status(404).json({ error: "Deck not found" });
 
-	await decksService.deleteDeck(deckId);
+	await decksService.deleteDeck(deckId, userId);
 	res.status(204).send();
 }

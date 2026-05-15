@@ -41,10 +41,15 @@ const toFsrsCard = (row: CardRow): Card => {
   }
 }
 
-export async function loadSession(deckId: number) {
+export async function loadSession(deckId: number, userId: string) {
   const { rows } = await db.query<CardRow>(
-    `SELECT * FROM cards WHERE deck_id = $1 AND due <= NOW() ORDER BY due ASC`,
-    [deckId]
+    `SELECT c.* FROM cards c
+     JOIN decks d ON d.id = c.deck_id
+     WHERE c.deck_id = $1
+       AND d.user_id = $2
+       AND c.due <= NOW()
+     ORDER BY c.due ASC`,
+    [deckId, userId]
   )
 
   const now = new Date()
@@ -69,11 +74,15 @@ export async function loadSession(deckId: number) {
   })
 }
 
-export async function submitSession(reviews: Review[], profileId: string) {
+export async function submitSession(reviews: Review[], profileId: string, deckId: number) {
   const cardIds = reviews.map(r => r.cardId)
   const { rows } = await db.query<CardRow>(
-    `SELECT * FROM cards WHERE id = ANY($1)`,
-    [cardIds]
+    `SELECT c.* FROM cards c
+     JOIN decks d ON d.id = c.deck_id
+     WHERE c.id = ANY($1)
+       AND c.deck_id = $2
+       AND d.user_id = $3`,
+    [cardIds, deckId, profileId]
   )
 
   const cardMap = new Map<number, Card>(rows.map(row => [row.id, toFsrsCard(row)]))
@@ -106,12 +115,13 @@ export async function submitSession(reviews: Review[], profileId: string) {
         due = $1, stability = $2, difficulty = $3,
         scheduled_days = $4,
         reps = $5, lapses = $6, state = $7, last_review = $8
-        WHERE id = $9`,
+        WHERE id = $9 AND deck_id = $10`,
         [
           card.due, card.stability, card.difficulty,
           card.scheduled_days,
           card.reps, card.lapses, card.state, card.last_review ?? null,
-          card.id
+          card.id,
+          deckId
         ]
       )
     }

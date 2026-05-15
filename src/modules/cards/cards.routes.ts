@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { authenticated } from "../../middleware/auth.middleware";
+import { cardMutationRateLimiter } from "../../middleware/rateLimiter.middleware";
 import { validateSchema } from "../../middleware/validator.middleware";
 import {
 	createCardSchema,
@@ -10,10 +12,12 @@ import * as cardsController from "./cards.controller";
 
 const router: Router = Router({ mergeParams: true });
 
-router.get("/", validateSchema(listCardsSchema), cardsController.listCards);
-router.post("/", validateSchema(createCardSchema), cardsController.addCard);
+router.use(authenticated);
 
-router.put("/:id", validateSchema(updateCardSchema), cardsController.updateCard);
-router.delete("/:id", validateSchema(deleteCardSchema), cardsController.deleteCard);
+router.get("/", validateSchema(listCardsSchema), cardsController.listCards);
+router.post("/", cardMutationRateLimiter, validateSchema(createCardSchema), cardsController.addCard);
+
+router.put("/:id", cardMutationRateLimiter, validateSchema(updateCardSchema), cardsController.updateCard);
+router.delete("/:id", cardMutationRateLimiter, validateSchema(deleteCardSchema), cardsController.deleteCard);
 
 export default router;

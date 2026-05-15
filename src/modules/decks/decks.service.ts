@@ -57,6 +57,7 @@ export async function getDeck(id: number, userId: string) {
   return rows[0] ?? null;
 }
 
-export async function deleteDeck(id: number) {
-  await db.query(`DELETE FROM decks WHERE id = $1`, [id]);
+export async function deleteDeck(id: number, userId: string) {
+  const { rowCount } = await db.query(`DELETE FROM decks WHERE id = $1 AND user_id = $2`, [id, userId]);
+  return rowCount != null && rowCount > 0;
 }

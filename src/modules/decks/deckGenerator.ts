@@ -17,12 +17,17 @@ export async function generateDeck(
 	pdfBuffer: Buffer,
 	cardCount: number,
 	name?: string,
+	description?: string,
 ): Promise<GeneratedDeck> {
 	const pdfBase64 = pdfBuffer.toString("base64");
 
 	const nameInstruction = name
 		? `Use "${name}" as the deck name.`
 		: `Generate a concise, descriptive deck name based on the main topic of the PDF.`;
+
+	const descInstruction = description
+		? `Use "${description}" as the description.`
+		: `Generate a short description (1-2 sentences) summarizing what the deck covers based on the PDF content.`;
 
 	const prompt = `
 You are an expert instructional designer converting a single document (the provided lesson text from a PDF) into objective, auto-gradable flashcards.
@@ -40,7 +45,7 @@ Question and Format rules:
 
 Return behavior:
 - ${nameInstruction}
-- Generate a short description (1-2 sentences) summarizing what the deck covers based on the PDF content.
+- ${descInstruction}
 - Create up to ${cardCount} objective, auto-gradable flashcards.
 - If you cannot create the requested number of cards without inventing content, return fewer cards. Do NOT fabricate content.
 

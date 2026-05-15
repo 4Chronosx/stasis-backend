@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../../middleware/auth.middleware";
 import * as decksService from "./decks.service";
-import { CreateDeckBody, DeckIdParams } from "./decks.schema";
+import { CreateDeckBody, DeckIdParams, UpdateDeckBody } from "./decks.schema";
 
 export async function createDeck(req: AuthRequest, res: Response) {
 	try {
@@ -21,6 +21,7 @@ export async function createDeck(req: AuthRequest, res: Response) {
 			body.cardCount,
 			userId,
 			body.name,
+			body.description,
 		);
 
 		res.status(201).json(result);
@@ -57,4 +58,22 @@ export async function deleteDeck(req: AuthRequest, res: Response) {
 
 	await decksService.deleteDeck(deckId);
 	res.status(204).send();
+}
+
+export async function updateDeck(req: AuthRequest, res: Response) {
+	const params = req.params as unknown as DeckIdParams;
+	const deckId = params.id;
+	const body = req.body as UpdateDeckBody;
+
+	const userId = req.user!.userId;
+	const existing = await decksService.getDeck(deckId, userId);
+	if (!existing) return res.status(404).json({ error: "Deck not found" });
+
+	const updated = await decksService.updateDeck(
+		deckId,
+		body.name ?? existing.name,
+		body.description ?? existing.description ?? "",
+	);
+	if (!updated) return res.status(404).json({ error: "Deck not found" });
+	res.json(updated);
 }

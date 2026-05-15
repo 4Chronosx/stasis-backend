@@ -1,6 +1,6 @@
 
 import { db } from "../../../config/db"
-import { ensureStreakInfo } from "../../streaks/streaks.service";
+import { ensureStreakInfo } from "../../streaks/streaks.service"
 
 interface ProfileRow {
     id: string;

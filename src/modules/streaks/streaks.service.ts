@@ -4,13 +4,13 @@ import { db } from "../../config/db";
 
 const DAILY_COMPLETION_TARGET = 10;
 
-export interface StreakInfo {
+export type StreakInfo = {
 	id: string;
 	profileId: string;
 	currentStreak: number;
 	completedCards: number;
 	remindUser: boolean;
-}
+};
 
 const mapStreakInfo = (row: {
 	id: string;

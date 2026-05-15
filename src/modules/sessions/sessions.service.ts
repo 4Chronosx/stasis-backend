@@ -1,6 +1,7 @@
 import { db } from '../../config/db';
 import { scheduler } from '../../config/scheduler';
-import { Rating, Grade, type Card, type ReviewLog } from 'ts-fsrs';
+import { Rating, type Card, type ReviewLog } from 'ts-fsrs';
+import type { Review } from './sessions.schema';
 
 type CardRow = {
   id: number;
@@ -65,12 +66,6 @@ export async function loadSession(deckId: number) {
       }
     }
   })
-}
-
-export type Review = {
-  cardId: number
-  rating: Grade
-  reviewedAt: string
 }
 
 export async function submitSession(reviews: Review[]) {

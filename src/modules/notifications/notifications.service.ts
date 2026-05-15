@@ -4,11 +4,11 @@ import { db } from "../../config/db";
 import { env } from "../../config/env";
 import { resetDailyStreaks } from "../streaks/streaks.service";
 
-interface ReminderUser {
+type ReminderUser = {
 	id: string;
 	email: string;
 	fullName: string | null;
-}
+};
 
 const resolveTransport = (): Transporter | null => {
 	const host = env.SMTP_HOST;

@@ -1,19 +1,19 @@
-export interface SessionUser {
+export type SessionUser = {
 	userId: string;
 	email: string;
 	name: string;
 	pictureUrl: string;
-}
+};
 
-export interface AppSession {
+export type AppSession = {
 	user?: SessionUser;
-}
+};
 
-export interface EmotionSession {
+export type EmotionSession = {
 	buffer: string[];
 	cooldowns: Map<string, number>;
 	streak: number;
-}
+};
 
 export class AppError extends Error {
 	statusCode: number;

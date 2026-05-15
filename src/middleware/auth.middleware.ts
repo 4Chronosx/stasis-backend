@@ -4,14 +4,14 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { env } from "../config/env";
 import { AppSession, SessionUser } from "../types";
 
-export interface AccessTokenPayload extends JwtPayload, SessionUser {}
+export type AccessTokenPayload = JwtPayload & SessionUser;
 
-interface RequestCookies {
+type RequestCookies = {
 	access_token?: string;
 	refresh_token?: string;
 	csrf_token?: string;
 	oauth_state?: string;
-}
+};
 
 export type CookieRequest<
 	P = Record<string, string>,

@@ -3,11 +3,11 @@
 
 import { db } from "../../../config/db";
 
-interface RefreshTokenRow {
+type RefreshTokenRow = {
     user_id: string;
     token: string;
     expires_at: Date;
-}
+};
 
 export const RefreshTokenService = {
     create: async ({ userId, token, expiresAt }: { userId: string, token: string, expiresAt: Date }) => {

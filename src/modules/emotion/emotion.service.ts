@@ -1,17 +1,5 @@
 import { db } from '../../config/db';
-
-export type SessionType = 'pomodoro' | 'study' | 'other';
-
-export type EmotionLabel = string;
-export type GazeLabel = string;
-
-export interface SnapshotInput {
-  emotion: EmotionLabel;
-  gaze: GazeLabel;
-  confusion: boolean;
-  timestamp: number;
-  confidence?: number;
-}
+import type { SessionType, SnapshotInput } from './emotion.schema';
 
 type SessionRow = {
   id: string;

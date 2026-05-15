@@ -10,11 +10,27 @@ import { ZodObject, ZodError } from "zod";
 export const validateSchema = (schema: ZodObject) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await schema.parseAsync({
+      const parsed = await schema.parseAsync({
         body: req.body as unknown,
         query: req.query,
         params: req.params,
-      });
+      }) as { body?: unknown; query?: unknown; params?: unknown };
+
+      if (parsed.body !== undefined) {
+        req.body = parsed.body;
+      }
+      if (parsed.query !== undefined) {
+        if (req.query && typeof req.query === "object") {
+          const query = req.query as Record<string, unknown>;
+          for (const key of Object.keys(query)) {
+            delete query[key];
+          }
+          Object.assign(query, parsed.query as Record<string, unknown>);
+        }
+      }
+      if (parsed.params !== undefined) {
+        req.params = parsed.params as typeof req.params;
+      }
 
       next();
     } catch (error) {

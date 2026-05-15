@@ -6,14 +6,10 @@ import { AuthRequest, CookieRequest } from '../../middleware/auth.middleware';
 import { RefreshTokenService } from './services/refresh.service';
 import { TokenService } from './services/token.service';
 import { env } from '../../config/env';
-
-interface AuthorizationCodeTokenRequest {
-    code: string,
-    client_id: string,
-    client_secret: string,
-    redirect_uri: string,
-    grant_type: 'authorization_code';
-}
+import {
+    authorizationCodeTokenRequestSchema,
+    type GoogleCallbackQuery,
+} from './auth.schema';
 
 const FRONTEND_URL = env.CLIENT_URL;
 const isProduction = env.NODE_ENV == "production";
@@ -52,13 +48,7 @@ export const url = (req: Request, res: Response) => {
     }
 }
 
-type CallbackQuery = {
-    code?: string;
-    state?: string;
-    error?: string;
-};
-
-export const callback = async(req: CookieRequest<Record<string, never>, unknown, unknown, CallbackQuery>, res: Response) => {
+export const callback = async(req: CookieRequest<Record<string, never>, unknown, unknown, GoogleCallbackQuery>, res: Response) => {
     const { code, state, error } = req.query;
     const storedState = req.cookies.oauth_state;
 
@@ -76,15 +66,15 @@ export const callback = async(req: CookieRequest<Record<string, never>, unknown,
 
     res.clearCookie("oauth_state");
 
-    const tokenRequest: AuthorizationCodeTokenRequest = {
-        code,
-        client_id: env.GOOGLE_CLIENT_ID!,
-        client_secret: env.GOOGLE_CLIENT_SECRET!,
-        redirect_uri: env.GOOGLE_CALLBACK_URL!,
-        grant_type: 'authorization_code'
-    }
-
     try {
+        const tokenRequest = authorizationCodeTokenRequestSchema.parse({
+            code,
+            client_id: env.GOOGLE_CLIENT_ID ?? "",
+            client_secret: env.GOOGLE_CLIENT_SECRET ?? "",
+            redirect_uri: env.GOOGLE_CALLBACK_URL ?? "",
+            grant_type: "authorization_code",
+        });
+
         const response = await AuthService.exchangeCode(tokenRequest);
 
         const ticket = await google.verifyIdToken({

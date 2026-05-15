@@ -6,6 +6,7 @@ import { AuthRequest, CookieRequest } from '../../middleware/auth.middleware';
 import { RefreshTokenService } from './services/refresh.service';
 import { TokenService } from './services/token.service';
 import { env } from '../../config/env';
+import { PreferencesService } from '../preferences/preferences.service';
 
 interface AuthorizationCodeTokenRequest {
     code: string,
@@ -110,6 +111,12 @@ export const callback = async(req: CookieRequest<Record<string, never>, unknown,
 
         if (!user) {
             return res.redirect(buildFrontendUrl("/auth/error?error=user_upsert_failed"));
+        }
+
+        const preferences = await PreferencesService.ensureForUser(user.id);
+
+        if (!preferences) {
+            return res.redirect(buildFrontendUrl("/auth/error?error=preferences_init_failed"));
         }
 
         const name = user.fullname ?? "";

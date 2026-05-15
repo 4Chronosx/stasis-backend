@@ -50,6 +50,42 @@ export const PreferencesService = {
     return rows[0] ?? null;
   },
 
+  async ensureForUser(userId: string): Promise<PreferencesRow | null> {
+    const { rows } = await db.query<PreferencesRow>(
+      `INSERT INTO user_preferences (user_id)
+      VALUES ($1)
+      ON CONFLICT (user_id) DO UPDATE SET user_id = EXCLUDED.user_id
+      RETURNING *`,
+      [userId]
+    );
+    return rows[0] ?? null;
+  },
+
+  async getCompletionStatus(userId: string): Promise<boolean> {
+    const { rows } = await db.query<Pick<PreferencesRow, "onboarding_completed">>(
+      `SELECT onboarding_completed FROM user_preferences WHERE user_id = $1`,
+      [userId]
+    );
+    return rows[0]?.onboarding_completed ?? false;
+  },
+
+  async markOnboardingCompleted(userId: string): Promise<PreferencesRow | null> {
+    const preferences = await this.ensureForUser(userId);
+
+    if (!preferences) {
+      return null;
+    }
+
+    const { rows } = await db.query<PreferencesRow>(
+      `UPDATE user_preferences
+      SET onboarding_completed = TRUE, updated_at = NOW()
+      WHERE user_id = $1
+      RETURNING *`,
+      [userId]
+    );
+    return rows[0] ?? null;
+  },
+
   async update(userId: string, data: UpdatePreferencesBody): Promise<PreferencesRow | null> {
     const fields: string[] = [];
     const values: unknown[] = [];

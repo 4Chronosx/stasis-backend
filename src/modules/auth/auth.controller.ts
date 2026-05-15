@@ -134,7 +134,7 @@ export const callback = async(req: CookieRequest<Record<string, never>, unknown,
             httpOnly: true,
             secure: isProduction,
             sameSite: isProduction ? "none" : "lax",
-            maxAge: 60 * 60 * 1000
+            maxAge: 15 * 60 * 1000
         });
 
         res.cookie("refresh_token", refreshToken, {

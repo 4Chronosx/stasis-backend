@@ -1,8 +1,9 @@
-import { Request, Response } from 'express'
+import { Response } from 'express'
+import { AuthRequest } from '../../middleware/auth.middleware'
 import * as sessionsService from './sessions.service'
 import type { SessionParams, SubmitSessionBody } from './sessions.schema'
 
-export async function loadSession(req: Request, res: Response) {
+export async function loadSession(req: AuthRequest, res: Response) {
   const params = req.params as unknown as SessionParams
   const deckId = params.deckId
 
@@ -10,8 +11,9 @@ export async function loadSession(req: Request, res: Response) {
   res.json({ cards })
 }
 
-export async function submitSession(req: Request, res: Response) {
+export async function submitSession(req: AuthRequest, res: Response) {
   const body = req.body as SubmitSessionBody
-  const result = await sessionsService.submitSession(body.reviews);
+  const profileId = req.user!.userId
+  const result = await sessionsService.submitSession(body.reviews, profileId);
   res.json(result);
 }

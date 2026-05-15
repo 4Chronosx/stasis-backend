@@ -1,14 +1,18 @@
-import type { PoolClient } from "pg";
-
 import { db } from "../../config/db";
-
-const DAILY_COMPLETION_TARGET = 10;
 
 export type StreakInfo = {
 	id: string;
 	profileId: string;
 	currentStreak: number;
 	completedCards: number;
+	remindUser: boolean;
+};
+
+export type StreakEmailUser = {
+	id: string;
+	email: string;
+	fullName: string | null;
+	currentStreak: number;
 	remindUser: boolean;
 };
 
@@ -58,7 +62,7 @@ export const ensureStreakInfo = async (profileId: string): Promise<StreakInfo> =
 	return mapStreakInfo(streakInfo);
 };
 
-export const recordCompletedCards = async (
+export const incrementCompletedCards = async (
 	profileId: string,
 	completedCount = 1
 ): Promise<StreakInfo> => {
@@ -66,79 +70,73 @@ export const recordCompletedCards = async (
 		throw new Error("completedCount must be a positive integer.");
 	}
 
-	const client = await db.connect();
-	try {
-		await client.query("BEGIN");
-		await ensureStreakInfoForClient(client, profileId);
+	await ensureStreakInfo(profileId);
 
-		const { rows } = await client.query<{
-			completedCards: number;
-			currentStreak: number;
-		}>(
-			`
-			SELECT
-				completed_cards AS "completedCards",
-				current_streak AS "currentStreak"
-			FROM streak_info
-			WHERE profile_id = $1
-			FOR UPDATE
-			`,
-			[profileId]
-		);
+	const { rows } = await db.query<{
+		id: string;
+		profileId: string;
+		currentStreak: number;
+		completedCards: number;
+		remindUser: boolean;
+	}>(
+		`
+		UPDATE streak_info
+		SET
+			completed_cards = LEAST(completed_cards + $2, 10),
+			remind_user = LEAST(completed_cards + $2, 10) < 10
+		WHERE profile_id = $1
+		RETURNING
+			id,
+			profile_id AS "profileId",
+			current_streak AS "currentStreak",
+			completed_cards AS "completedCards",
+			remind_user AS "remindUser"
+		`,
+		[profileId, completedCount]
+	);
 
-		const current = rows[0];
-		if (!current) {
-			throw new Error("Streak info row not found.");
-		}
-
-		const nextCompletedCards = current.completedCards + completedCount;
-		const completedDailyTarget =
-			current.completedCards < DAILY_COMPLETION_TARGET &&
-			nextCompletedCards >= DAILY_COMPLETION_TARGET;
-
-		const nextCurrentStreak = completedDailyTarget
-			? current.currentStreak + 1
-			: current.currentStreak;
-		const nextRemindUser = nextCompletedCards >= DAILY_COMPLETION_TARGET ? false : true;
-
-		const result = await client.query<{
-			id: string;
-			profileId: string;
-			currentStreak: number;
-			completedCards: number;
-			remindUser: boolean;
-		}>(
-			`
-			UPDATE streak_info
-			SET
-				completed_cards = $2,
-				current_streak = $3,
-				remind_user = $4
-			WHERE profile_id = $1
-			RETURNING
-				id,
-				profile_id AS "profileId",
-				current_streak AS "currentStreak",
-				completed_cards AS "completedCards",
-				remind_user AS "remindUser"
-			`,
-			[profileId, nextCompletedCards, nextCurrentStreak, nextRemindUser]
-		);
-
-		await client.query("COMMIT");
-
-		const streakInfo = result.rows[0];
-		if (!streakInfo) {
-			throw new Error("Failed to update streak info.");
-		}
-
-		return mapStreakInfo(streakInfo);
-	} catch (error) {
-		await client.query("ROLLBACK");
-		throw error;
-	} finally {
-		client.release();
+	const streakInfo = rows[0];
+	if (!streakInfo) {
+		throw new Error("Failed to update streak info.");
 	}
+
+	return mapStreakInfo(streakInfo);
+};
+
+export const fetchUsersNeedingReminder = async (): Promise<StreakEmailUser[]> => {
+	const { rows } = await db.query<StreakEmailUser>(
+		`
+		SELECT
+			p.id,
+			p.email,
+			p.full_name AS "fullName",
+			s.current_streak AS "currentStreak",
+			s.remind_user AS "remindUser"
+		FROM profiles p
+		INNER JOIN streak_info s ON s.profile_id = p.id
+		WHERE s.remind_user = TRUE
+		AND s.current_streak > 1
+		`
+	);
+
+	return rows;
+};
+
+export const fetchUsersForStreakRefresh = async (): Promise<StreakEmailUser[]> => {
+	const { rows } = await db.query<StreakEmailUser>(
+		`
+		SELECT
+			p.id,
+			p.email,
+			p.full_name AS "fullName",
+			s.current_streak AS "currentStreak",
+			s.remind_user AS "remindUser"
+		FROM profiles p
+		INNER JOIN streak_info s ON s.profile_id = p.id
+		`
+	);
+
+	return rows;
 };
 
 export const resetDailyStreaks = async () => {
@@ -176,13 +174,3 @@ export const resetDailyStreaks = async () => {
 	}
 };
 
-const ensureStreakInfoForClient = async (client: PoolClient, profileId: string) => {
-	await client.query(
-		`
-		INSERT INTO streak_info (profile_id)
-		VALUES ($1)
-		ON CONFLICT (profile_id) DO NOTHING
-		`,
-		[profileId]
-	);
-};

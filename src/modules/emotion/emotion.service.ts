@@ -267,34 +267,75 @@ export async function getTrends(
   const truncMap = { daily: 'day', weekly: 'week', monthly: 'month' } as const;
   const trunc = truncMap[granularity];
 
+  // Fetch per-session data so we can compute weighted emotion breakdowns in JS
   const { rows } = await db.query<{
     period: Date;
-    session_count: string;
     focus_score: string | null;
+    snapshot_count: string;
     emotion_breakdown: Record<string, number> | null;
   }>(
     `SELECT
        DATE_TRUNC($1, started_at) AS period,
-       COUNT(*) AS session_count,
-       AVG(focus_score) AS focus_score,
-       NULL::jsonb AS emotion_breakdown
+       focus_score,
+       snapshot_count,
+       emotion_breakdown
      FROM emotion_sessions
      WHERE user_id = $2
        AND started_at >= NOW() - ($3 || ' days')::interval
        AND ended_at IS NOT NULL
-     GROUP BY period
      ORDER BY period DESC`,
     [trunc, userId, days],
   );
 
-  return {
-    granularity,
-    data: rows.map((r) => ({
-      date: r.period,
-      sessionCount: parseInt(r.session_count, 10),
-      focusScore: r.focus_score ? Math.round(parseFloat(r.focus_score) * 1000) / 1000 : null,
-    })),
-  };
+  // Group by period and compute weighted averages
+  const periodMap = new Map<string, {
+    period: Date;
+    totalSnapshots: number;
+    focusSum: number;
+    focusCount: number;
+    emotionWeights: Record<string, number>;
+  }>();
+
+  for (const row of rows) {
+    const key = row.period.toISOString();
+    if (!periodMap.has(key)) {
+      periodMap.set(key, { period: row.period, totalSnapshots: 0, focusSum: 0, focusCount: 0, emotionWeights: {} });
+    }
+    const entry = periodMap.get(key)!;
+    const snaps = parseInt(row.snapshot_count, 10);
+
+    if (row.focus_score !== null) {
+      entry.focusSum += parseFloat(row.focus_score);
+      entry.focusCount++;
+    }
+
+    if (row.emotion_breakdown && snaps > 0) {
+      entry.totalSnapshots += snaps;
+      for (const [emotion, proportion] of Object.entries(row.emotion_breakdown)) {
+        entry.emotionWeights[emotion] = (entry.emotionWeights[emotion] ?? 0) + proportion * snaps;
+      }
+    }
+  }
+
+  const data = Array.from(periodMap.values()).map((entry) => {
+    const emotionBreakdown: Record<string, number> = {};
+    if (entry.totalSnapshots > 0) {
+      for (const [emotion, weight] of Object.entries(entry.emotionWeights)) {
+        emotionBreakdown[emotion] = Math.round((weight / entry.totalSnapshots) * 1000) / 1000;
+      }
+    }
+
+    return {
+      date: entry.period,
+      sessionCount: rows.filter((r) => r.period.toISOString() === entry.period.toISOString()).length,
+      focusScore: entry.focusCount > 0
+        ? Math.round((entry.focusSum / entry.focusCount) * 1000) / 1000
+        : null,
+      emotionBreakdown,
+    };
+  });
+
+  return { granularity, data };
 }
 
 export async function deleteSession(sessionId: string, userId: string) {

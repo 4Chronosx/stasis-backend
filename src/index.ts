@@ -90,7 +90,7 @@ app.get("/", (_req: Request, res: Response) => {
 // app.use("/api/flashcards", flashcardsRoutes);
 // ...
 app.use("/auth", authRoutes);
-app.use("/api", onboardingRouter);
+app.use(onboardingRouter);
 app.use("/api", (_req: Request, res: Response) => {
 	res.status(501).json({
 		message: "API routes are not wired yet.",

@@ -1,7 +1,7 @@
 import { db } from "../../config/db";
 import { CreatePreferencesBody, UpdatePreferencesBody } from "./preferences.schema";
 
-interface PreferencesRow {
+type PreferencesRow = {
   id: string;
   user_id: string;
   attention_score: number;
@@ -23,7 +23,7 @@ interface PreferencesRow {
   onboarding_completed_at: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
 export const PreferencesService = {
   async findByUserId(userId: string): Promise<PreferencesRow | null> {

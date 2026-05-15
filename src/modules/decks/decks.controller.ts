@@ -1,12 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../../middleware/auth.middleware";
 import * as decksService from "./decks.service";
-import { CreateDeckBody } from "./decks.schema";
-
-const parseIdParam = (value: unknown): number | null => {
-	const raw = typeof value === "string" || typeof value === "number" ? Number(value) : Number.NaN;
-	return Number.isFinite(raw) ? raw : null;
-};
+import { CreateDeckBody, DeckIdParams } from "./decks.schema";
 
 export async function createDeck(req: AuthRequest, res: Response) {
 	try {
@@ -43,9 +38,8 @@ export async function listDecks(req: AuthRequest, res: Response) {
 }
 
 export async function getDeck(req: AuthRequest, res: Response) {
-	const params = req.params as { id?: string };
-	const deckId = parseIdParam(params.id);
-	if (deckId === null) return res.status(400).json({ error: "invalid deck id" });
+	const params = req.params as unknown as DeckIdParams;
+	const deckId = params.id;
 
 	const userId = req.user!.userId;
 	const deck = await decksService.getDeck(deckId, userId);
@@ -54,9 +48,8 @@ export async function getDeck(req: AuthRequest, res: Response) {
 }
 
 export async function deleteDeck(req: AuthRequest, res: Response) {
-	const params = req.params as { id?: string };
-	const deckId = parseIdParam(params.id);
-	if (deckId === null) return res.status(400).json({ error: "invalid deck id" });
+	const params = req.params as unknown as DeckIdParams;
+	const deckId = params.id;
 
 	const userId = req.user!.userId;
 	const deck = await decksService.getDeck(deckId, userId);

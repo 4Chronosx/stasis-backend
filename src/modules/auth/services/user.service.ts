@@ -1,19 +1,20 @@
 
 import { db } from "../../../config/db"
+import { ensureStreakInfo } from "../../streaks/streaks.service"
 
-interface ProfileRow {
+type ProfileRow = {
     id: string;
     fullname: string | null;
     email: string;
     pictureUrl: string | null;
-}
+};
 
-interface GoogleUser {
+type GoogleUser = {
     googleId: string,
     email: string,
     fullname: string,
     picture: string
-}
+};
 
 export const UserService = {
     upsert: async (data: GoogleUser) => {
@@ -30,7 +31,12 @@ export const UserService = {
             `,
             [data.googleId, data.fullname, data.email, data.picture]
         );
-        return rows[0] ?? null;
+        const user = rows[0] ?? null;
+        if (user) {
+            await ensureStreakInfo(user.id);
+        }
+
+        return user;
     },
 
     findById: async (userId: string) => {

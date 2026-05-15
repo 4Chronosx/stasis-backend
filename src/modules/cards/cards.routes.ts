@@ -1,14 +1,19 @@
 import { Router } from "express";
 import { validateSchema } from "../../middleware/validator.middleware";
-import { createCardSchema, updateCardSchema } from "./cards.schema";
+import {
+	createCardSchema,
+	deleteCardSchema,
+	listCardsSchema,
+	updateCardSchema,
+} from "./cards.schema";
 import * as cardsController from "./cards.controller";
 
 const router: Router = Router({ mergeParams: true });
 
-router.get("/", cardsController.listCards);
+router.get("/", validateSchema(listCardsSchema), cardsController.listCards);
 router.post("/", validateSchema(createCardSchema), cardsController.addCard);
 
 router.put("/:id", validateSchema(updateCardSchema), cardsController.updateCard);
-router.delete("/:id", cardsController.deleteCard);
+router.delete("/:id", validateSchema(deleteCardSchema), cardsController.deleteCard);
 
 export default router;

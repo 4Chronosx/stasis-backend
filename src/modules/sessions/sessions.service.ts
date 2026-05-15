@@ -143,5 +143,7 @@ export async function submitSession(reviews: Review[]) {
     client.release()
   }
 
+  // Future streak hook: once "completed flashcard" is defined, call
+  // recordCompletedCards(profileId, completedCount) from the streaks service here.
   return { saved: updates.length }
 }

@@ -2,6 +2,7 @@ import nodemailer, { Transporter } from "nodemailer";
 
 import { db } from "../../config/db";
 import { env } from "../../config/env";
+import { resetDailyStreaks } from "../streaks/streaks.service";
 
 interface ReminderUser {
 	id: string;
@@ -36,27 +37,20 @@ const resolveFromAddress = (): string | null => {
 const fetchUsersNeedingReminder = async (): Promise<ReminderUser[]> => {
 	const { rows } = await db.query<ReminderUser>(
 		`
-		SELECT id, email, full_name AS "fullName"
-		FROM profiles
-		WHERE (last_studied_date IS NULL OR last_studied_date <> CURRENT_DATE)
-		  AND (streak_reminder_sent_date IS NULL OR streak_reminder_sent_date <> CURRENT_DATE)
+		SELECT p.id, p.email, p.full_name AS "fullName"
+		FROM profiles p
+		INNER JOIN streak_info s ON s.profile_id = p.id
+		WHERE s.remind_user = TRUE
 		`
 	);
 
 	return rows;
 };
 
-const markReminderSent = async (userId: string) => {
-	await db.query(
-		`UPDATE profiles SET streak_reminder_sent_date = CURRENT_DATE WHERE id = $1`,
-		[userId]
-	);
-};
-
 const sendReminderEmail = async (transport: Transporter, from: string, user: ReminderUser) => {
 	const displayName = user.fullName?.trim() || "there";
 	const subject = "Don't break your streak!";
-	const text = `Hi ${displayName},\n\nYou haven't studied today yet. Log in before midnight to keep your streak alive.\n\n- STASIS`;
+	const text = `Hi ${displayName},\n\nYou are close to losing your flashcard streak. Complete 10 flashcards before midnight to keep it going.\n\n- STASIS`;
 
 	await transport.sendMail({
 		from,
@@ -80,7 +74,6 @@ export const runStreakReminderJob = async () => {
 	for (const user of users) {
 		try {
 			await sendReminderEmail(transport, from, user);
-			await markReminderSent(user.id);
 		} catch (error) {
 			console.error(
 				`[CRON] Failed to send streak reminder to ${user.email}:`,
@@ -88,4 +81,8 @@ export const runStreakReminderJob = async () => {
 			);
 		}
 	}
+};
+
+export const runDailyStreakResetJob = async () => {
+	await resetDailyStreaks();
 };

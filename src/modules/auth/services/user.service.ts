@@ -1,5 +1,6 @@
 
 import { db } from "../../../config/db"
+import { ensureStreakInfo } from "../../streaks/streaks.service"
 
 interface ProfileRow {
     id: string;
@@ -30,7 +31,12 @@ export const UserService = {
             `,
             [data.googleId, data.fullname, data.email, data.picture]
         );
-        return rows[0] ?? null;
+        const user = rows[0] ?? null;
+        if (user) {
+            await ensureStreakInfo(user.id);
+        }
+
+        return user;
     },
 
     findById: async (userId: string) => {

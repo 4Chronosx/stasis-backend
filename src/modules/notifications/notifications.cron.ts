@@ -4,8 +4,8 @@ import { runDailyStreakResetJob, runStreakReminderJob } from "./notifications.se
 
 let streakJobsStarted = false;
 const STREAK_JOB_TIMEZONE = "Asia/Manila";
-const STREAK_REMINDER_CRON = "* * * * *";
-const DAILY_STREAK_RESET_CRON = "* * * * *";
+const STREAK_REMINDER_CRON = "0 21 * * *";
+const DAILY_STREAK_RESET_CRON = "0 0 * * *";
 
 export const startStreakReminderJob = () => {
 	if (streakJobsStarted) {

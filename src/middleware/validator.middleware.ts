@@ -17,7 +17,7 @@ export const validateSchema = (schema: ZodObject) => {
       }) as { body?: unknown; query?: unknown; params?: unknown };
 
       if (parsed.body !== undefined) {
-        req.body = parsed.body as typeof req.body;
+        req.body = parsed.body;
       }
       if (parsed.query !== undefined) {
         req.query = parsed.query as typeof req.query;

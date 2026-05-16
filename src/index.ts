@@ -11,6 +11,7 @@ import decksRouter from "./modules/decks/decks.routes";
 import cardsRouter from "./modules/cards/cards.routes";
 import sessionsRouter from "./modules/sessions/sessions.routes";
 import emotionRouter from "./modules/emotion/emotion.routes";
+import interventionRouter from "./modules/intervention/intervention.routes";
 import onboardingRouter from "./modules/onboarding/onboarding.routes";
 import { hydrateRequestSession } from "./middleware/auth.middleware";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
@@ -98,6 +99,7 @@ app.use("/decks", decksRouter);
 app.use("/decks/:deckId/cards", cardsRouter);
 app.use("/decks/:deckId/session", sessionsRouter);
 app.use("/emotion", emotionRouter);
+app.use("/intervention", interventionRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

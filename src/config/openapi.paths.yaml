@@ -138,6 +138,76 @@
       "401":
         description: Unauthorized
 
+# Runtime Preferences
+/preferences/runtime:
+  get:
+    summary: Get runtime study preferences
+    tags:
+      - Preferences
+    security:
+      - cookieAuth: []
+    responses:
+      "200":
+        description: Runtime preferences and onboarding snapshot. Includes storage_available=false when preference columns are not migrated yet.
+      "401":
+        description: Unauthorized
+  put:
+    summary: Save runtime study preferences
+    tags:
+      - Preferences
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: header
+        name: x-csrf-token
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      "200":
+        description: Saved runtime preferences and onboarding snapshot
+      "400":
+        description: Invalid preference payload
+      "401":
+        description: Unauthorized
+      "503":
+        description: Runtime preference storage is not migrated yet
+
+/preferences/onboarding:
+  post:
+    summary: Complete runtime preference onboarding
+    tags:
+      - Preferences
+    security:
+      - cookieAuth: []
+    parameters:
+      - in: header
+        name: x-csrf-token
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      "201":
+        description: Runtime preferences saved and onboarding snapshot initialized
+      "400":
+        description: Invalid preference payload
+      "401":
+        description: Unauthorized
+      "503":
+        description: Runtime preference storage is not migrated yet
+
 # Decks
 /decks:
   get:

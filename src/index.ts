@@ -11,6 +11,7 @@ import decksRouter from "./modules/decks/decks.routes";
 import cardsRouter from "./modules/cards/cards.routes";
 import sessionsRouter from "./modules/sessions/sessions.routes";
 import emotionRouter from "./modules/emotion/emotion.routes";
+import preferencesRouter from "./modules/preferences/preferences.routes";
 import interventionRouter from "./modules/intervention/intervention.routes";
 import onboardingRouter from "./modules/onboarding/onboarding.routes";
 import { hydrateRequestSession } from "./middleware/auth.middleware";
@@ -27,7 +28,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 	res.setHeader("Access-Control-Allow-Origin", env.CLIENT_URL);
 	res.setHeader("Vary", "Origin");
 	res.setHeader("Access-Control-Allow-Credentials", "true");
-	res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+	res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-CSRF-Token");
 	res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
 
 	if (req.method === "OPTIONS") {
@@ -99,7 +100,9 @@ app.use("/decks", decksRouter);
 app.use("/decks/:deckId/cards", cardsRouter);
 app.use("/decks/:deckId/session", sessionsRouter);
 app.use("/emotion", emotionRouter);
+app.use("/preferences", preferencesRouter);
 app.use("/intervention", interventionRouter);
+
 
 app.use(notFoundHandler);
 app.use(errorHandler);

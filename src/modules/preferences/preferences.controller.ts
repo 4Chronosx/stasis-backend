@@ -1,7 +1,63 @@
 import { Response } from "express";
 import { AuthRequest } from "../../middleware/auth.middleware";
-import { PreferencesService } from "./preferences.service";
-import { createPreferencesSchema, updatePreferencesSchema } from "./preferences.schema";
+import {
+  PreferencesService,
+  RuntimePreferencesStorageUnavailableError,
+} from "./preferences.service";
+import {
+  createPreferencesSchema,
+  runtimePreferencesRequestSchema,
+  updatePreferencesSchema,
+} from "./preferences.schema";
+
+export const getRuntimePreferences = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+    const preferences = await PreferencesService.findRuntimeByUserId(userId);
+    res.json(preferences);
+  } catch (error) {
+    console.error("[PREFERENCES] GET runtime failed:", error);
+    res.status(500).json({ message: "Failed to retrieve runtime preferences" });
+  }
+};
+
+export const saveRuntimePreferences = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+    const { body } = runtimePreferencesRequestSchema.parse({ body: req.body });
+    const preferences = await PreferencesService.saveRuntime(userId, body);
+    res.json(preferences);
+  } catch (error) {
+    if (error instanceof RuntimePreferencesStorageUnavailableError) {
+      return res.status(503).json({
+        message: error.message,
+        storage_available: false,
+      });
+    }
+
+    console.error("[PREFERENCES] PUT runtime failed:", error);
+    res.status(500).json({ message: "Failed to save runtime preferences" });
+  }
+};
+
+export const completeRuntimeOnboarding = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+    const { body } = runtimePreferencesRequestSchema.parse({ body: req.body });
+    const preferences = await PreferencesService.completeOnboarding(userId, body);
+    res.status(201).json(preferences);
+  } catch (error) {
+    if (error instanceof RuntimePreferencesStorageUnavailableError) {
+      return res.status(503).json({
+        message: error.message,
+        storage_available: false,
+      });
+    }
+
+    console.error("[PREFERENCES] POST onboarding failed:", error);
+    res.status(500).json({ message: "Failed to complete runtime onboarding" });
+  }
+};
 
 export const getPreferences = async (req: AuthRequest, res: Response) => {
   try {

@@ -7,10 +7,7 @@ export async function createDeck(req: AuthRequest, res: Response) {
 	try {
 		const file = req.file;
 		if (!file) {
-			return res.status(400).json({ error: "PDF file is required" });
-		}
-		if (file.mimetype !== "application/pdf") {
-			return res.status(400).json({ error: "Only PDF files are accepted" });
+			return res.status(400).json({ error: "File is required" });
 		}
 
 		const body = req.body as CreateDeckBody;
@@ -18,6 +15,7 @@ export async function createDeck(req: AuthRequest, res: Response) {
 
 		const result = await decksService.createDeck(
 			file.buffer,
+			file.mimetype,
 			body.cardCount,
 			userId,
 			body.name,

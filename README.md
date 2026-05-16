@@ -60,7 +60,7 @@ The system combines **machine learning**, **natural language processing**, and *
 
 Traditional study tools are static — they don't respond to how you're actually feeling or performing during a session. STASIS changes that by treating the study session as a live, adaptive loop.
 
-- 🤖 **AI Flashcard Generation:** Upload PDF, DOCX, or TXT study materials and STASIS automatically generates question-and-answer flashcard pairs using the Claude LLM API (`claude-sonnet-4-6`). Flashcards are organized into decks tied to a learning topic.
+- 🤖 **AI Flashcard Generation:** Upload study materials (PDF, images, text, etc.) and STASIS automatically generates question-and-answer flashcard pairs using the Gemini AI API. Flashcards are organized into decks tied to a learning topic.
 - 🔁 **Spaced Repetition Engine:** Implements the SM-2 algorithm with quality ratings (again, hard, good, easy) to track each card's difficulty, review interval, and ease factor. Cards due for review are surfaced at the optimal time to maximize long-term memory retention.
 - 😊 **Emotion-Aware Study Session:** A Pomodoro timer and live emotion detection run simultaneously and independently during every session. The webcam captures facial expressions in real time via `face-api.js` — detected emotion labels are streamed via Socket.io to the Adaptive Learning Engine. No webcam data or image frames are ever sent to the server.
 - ⚡ **Smart Session Interventions:** When the Adaptive Learning Engine detects a sustained negative emotional state (sad, angry, disgusted, fearful) across 3 consecutive emotion frames, it triggers a lightweight in-session mood booster — a motivational meme or quote, a face challenge (e.g. make your biggest smile for 5 seconds, validated client-side by `face-api.js`), or a micro-celebration for answer streaks. The Pomodoro timer is never paused. Each intervention type has its own cooldown to prevent spam.
@@ -229,7 +229,7 @@ stasis/
     │       ├── auth/                 # Google OAuth via Passport.js, session persistence via connect-pg-simple
     │       ├── onboarding/           # 7-score learner profile quiz, adaptive_params computation
     │       ├── preferences/          # User preferences CRUD
-    │       ├── materials/            # File upload via Multer — PDF (pdf-parse), DOCX (mammoth), TXT
+    │       ├── materials/            # File upload via Multer — Support for various file types (PDF, Images, etc.)
     │       ├── flashcards/           # Topic + deck CRUD, Claude LLM generation, offline bundle endpoint
     │       ├── review/               # SM-2 spaced repetition, card state updates, offline sync endpoint
     │       ├── emotion/              # Socket.io event handlers, emotion buffer, intervention rule engine

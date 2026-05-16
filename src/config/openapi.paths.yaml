@@ -158,7 +158,7 @@
       "401":
         description: Unauthorized
   post:
-    summary: Create a new deck from a PDF
+    summary: Create a new deck from a file
     tags:
       - Decks
     security:
@@ -175,7 +175,7 @@
               file:
                 type: string
                 format: binary
-                description: PDF file to generate flashcards from
+                description: File to generate flashcards from (PDF, image, text, etc.)
               name:
                 type: string
                 description: Deck name (AI-generated if omitted)
@@ -200,7 +200,7 @@
                   items:
                     $ref: '#/components/schemas/Card'
       "400":
-        description: Missing or invalid PDF file
+        description: Missing or invalid file
       "401":
         description: Unauthorized
       "500":

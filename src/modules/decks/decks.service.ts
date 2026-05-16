@@ -13,20 +13,21 @@ type DeckRow = {
 };
 
 /**
- * Creates a deck from an uploaded PDF:
- * 1. Sends the PDF to Gemini to generate name, description, and flashcards
+ * Creates a deck from an uploaded file:
+ * 1. Sends the file to Gemini to generate name, description, and flashcards
  * 2. Inserts the deck row into the database
  * 3. Bulk-inserts all generated cards
  * 4. Returns the deck + cards
  */
 export async function createDeck(
-  pdfBuffer: Buffer,
+  fileBuffer: Buffer,
+  mimeType: string,
   cardCount: number,
   userId: string,
   name?: string,
   description?: string,
 ) {
-  const generated = await generateDeck(pdfBuffer, cardCount, name, description);
+  const generated = await generateDeck(fileBuffer, mimeType, cardCount, name, description);
 
   const { rows } = await db.query<DeckRow>(
     `INSERT INTO decks (name, description, user_id) VALUES ($1, $2, $3) RETURNING *`,

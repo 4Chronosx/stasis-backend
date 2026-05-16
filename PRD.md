@@ -32,7 +32,7 @@ Implement the complete STASIS backend across all core modules: authentication, o
 15. As a user, I want to update my preferences, so that I can adjust my adaptive learning parameters as my needs change.
 
 ### Materials Upload
-16. As a user, I want to upload a PDF, DOCX, or TXT study file, so that STASIS can extract its content for flashcard generation.
+16. As a user, I want to upload a study file (PDF, image, text, etc.), so that STASIS can extract its content for flashcard generation.
 17. As a user, I want the backend to validate my uploaded file type and size, so that unsupported or oversized files are rejected with a clear error.
 18. As a user, I want the extracted text from my uploaded file to be returned to me, so that I can confirm the content before generating flashcards.
 
@@ -83,8 +83,8 @@ Implement the complete STASIS backend across all core modules: authentication, o
 ## Implementation Decisions
 
 ### Dependency Installation
-- Install: `socket.io`, `passport`, `passport-google-oauth20`, `express-session`, `connect-pg-simple`, `multer`, `@anthropic-ai/sdk`, `express-rate-limit`, `pdf-parse`, `mammoth`, `node-cron`, `resend`
-- Install types: `@types/passport`, `@types/passport-google-oauth20`, `@types/express-session`, `@types/multer`, `@types/pdf-parse`, `@types/mammoth`, `@types/node-cron`
+- Install: `socket.io`, `passport`, `passport-google-oauth20`, `express-session`, `connect-pg-simple`, `multer`, `express-rate-limit`, `node-cron`, `resend`
+- Install types: `@types/passport`, `@types/passport-google-oauth20`, `@types/express-session`, `@types/multer`, `@types/node-cron`
 
 ### Types Layer
 - Create `src/types/index.ts` with shared interfaces: `AuthenticatedRequest`, `EmotionFrame`, `InterventionPayload`, `CardStateUpdate`, `AdaptiveParams`
@@ -108,16 +108,13 @@ Implement the complete STASIS backend across all core modules: authentication, o
 - `GET /api/onboarding/status` returns `{ completed: boolean }`
 
 ### Materials Module
-- Use `multer` with memory storage, 10MB limit, accept PDF/DOCX/TXT only
-- PDF text extraction: `pdf-parse`
-- DOCX text extraction: `mammoth`
-- TXT: read buffer directly
+- Use `multer` with memory storage, 30MB limit, accept various file types (PDF, images, text)
 - `POST /api/materials/upload` returns `{ text: string }` — extracted content ready for flashcard generation
 
 ### Flashcards Module
-- `POST /api/flashcards/generate` accepts `{ text, topicTitle, deckName }`, calls Claude API to generate Q&A pairs, inserts topic, deck, flash_cards, and card_state in a single transaction
-- Claude prompt instructs the model to return a JSON array of `{ question, answer }` objects
-- Use `claude-sonnet-4-6` model with prompt caching on the system prompt for repeated generation calls
+- `POST /api/flashcards/generate` accepts `{ text, topicTitle, deckName }`, calls Gemini AI API to generate Q&A pairs, inserts topic, deck, flash_cards, and card_state in a single transaction
+- Gemini prompt instructs the model to return a JSON array of `{ question, answer }` objects
+- Use `gemini-2.0-flash` model for generation calls
 - `GET /api/flashcards` returns all topics with nested decks for the authenticated user
 - `GET /api/flashcards/:deckId` returns the deck with all its cards
 - `DELETE /api/flashcards/:deckId` cascades to cards and card states

@@ -7,35 +7,37 @@ export type GeneratedDeck = {
 };
 
 /**
- * Sends a PDF to the Gemini API and returns generated flashcard data.
+ * Sends a file to the Gemini API and returns generated flashcard data.
  *
- * @param pdfBuffer  Raw PDF file buffer (from multer memory storage)
+ * @param fileBuffer Raw file buffer (from multer memory storage)
+ * @param mimeType   MIME type of the uploaded file
  * @param cardCount  Maximum number of cards to generate (capped at 30)
  * @param name       Optional deck name — if omitted, Gemini generates one
  */
 export async function generateDeck(
-	pdfBuffer: Buffer,
+	fileBuffer: Buffer,
+	mimeType: string,
 	cardCount: number,
 	name?: string,
 	description?: string,
 ): Promise<GeneratedDeck> {
-	const pdfBase64 = pdfBuffer.toString("base64");
+	const fileBase64 = fileBuffer.toString("base64");
 
 	const nameInstruction = name
 		? `Use "${name}" as the deck name.`
-		: `Generate a concise, descriptive deck name based on the main topic of the PDF.`;
+		: `Generate a concise, descriptive deck name based on the main topic of the document.`;
 
 	const descInstruction = description
 		? `Use "${description}" as the description.`
-		: `Generate a short description (1-2 sentences) summarizing what the deck covers based on the PDF content.`;
+		: `Generate a short description (1-2 sentences) summarizing what the deck covers based on the document content.`;
 
 	const prompt = `
-You are an expert instructional designer converting a single document (the provided lesson text from a PDF) into objective, auto-gradable flashcards.
+You are an expert instructional designer converting a single document (the provided lesson text from a document) into objective, auto-gradable flashcards.
 
 Critical constraints (enforce strictly):
-- STRICT TOPIC: Use ONLY information present in the provided PDF. Do NOT introduce facts, examples, or context not found in the text.
+- STRICT TOPIC: Use ONLY information present in the provided document. Do NOT introduce facts, examples, or context not found in the text.
 - NO OUTSIDE KNOWLEDGE: Do not rely on or add external information, dates, author names, or references not in the document.
-- If the PDF does not contain enough information to produce the requested number of cards, produce as many valid objective cards as possible and include no invented content.
+- If the document does not contain enough information to produce the requested number of cards, produce as many valid objective cards as possible and include no invented content.
 
 Question and Format rules:
 - Objective and auto-gradable only (single word, short phrase, number, TRUE/FALSE, or fill-in-the-blank).
@@ -67,8 +69,8 @@ No markdown, no commentary, no explanations — only the JSON object.
 		contents: [
 			{
 				inlineData: {
-					mimeType: "application/pdf",
-					data: pdfBase64,
+					mimeType: mimeType,
+					data: fileBase64,
 				},
 			},
 			{ text: prompt },

@@ -8,13 +8,20 @@ import { RequestHandler } from "express";
 const upload = multer({
 	storage: multer.memoryStorage(),
 	limits: { fileSize: 30 * 1024 * 1024 }, // 30 MB
-	fileFilter: (_req, file, cb) => {
-		if (file.mimetype === "application/pdf") {
-			cb(null, true);
-		} else {
-			cb(new Error("Only PDF files are accepted"));
-		}
-	},
 });
 
-export const uploadPdf: RequestHandler = upload.single("pdf");
+export const uploadFile: RequestHandler = (req, res, next) => {
+	upload.single("file")(req, res, (err: unknown) => {
+		if (err) {
+			const message = err instanceof Error ? err.message : "File upload error";
+			if (message === "Field name missing") {
+				return res.status(400).json({
+					error: "Malformed form-data. Ensure your file field has the key 'file'."
+				});
+			}
+			return res.status(400).json({ error: message });
+		}
+
+		next();
+	});
+};

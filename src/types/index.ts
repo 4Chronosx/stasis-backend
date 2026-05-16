@@ -11,8 +11,6 @@ export type AppSession = {
 
 export type EmotionSession = {
 	buffer: string[];
-	cooldowns: Map<string, number>;
-	streak: number;
 };
 
 export class AppError extends Error {

@@ -19,3 +19,6 @@ Thumbs.db
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Claude Code settings
+.claude/

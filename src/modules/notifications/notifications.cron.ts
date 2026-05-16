@@ -4,6 +4,8 @@ import { runDailyStreakResetJob, runStreakReminderJob } from "./notifications.se
 
 let streakJobsStarted = false;
 const STREAK_JOB_TIMEZONE = "Asia/Manila";
+const STREAK_REMINDER_CRON = "0 21 * * *";
+const DAILY_STREAK_RESET_CRON = "0 0 * * *";
 
 export const startStreakReminderJob = () => {
 	if (streakJobsStarted) {
@@ -13,7 +15,7 @@ export const startStreakReminderJob = () => {
 	streakJobsStarted = true;
 
 	cron.schedule(
-		"0 21 * * *",
+		STREAK_REMINDER_CRON,
 		async () => {
 			try {
 				await runStreakReminderJob();
@@ -28,7 +30,7 @@ export const startStreakReminderJob = () => {
 	);
 
 	cron.schedule(
-		"0 0 * * *",
+		DAILY_STREAK_RESET_CRON,
 		async () => {
 			try {
 				await runDailyStreakResetJob();
@@ -42,6 +44,6 @@ export const startStreakReminderJob = () => {
 		{ timezone: STREAK_JOB_TIMEZONE }
 	);
 
-	console.log("[CRON] Streak reminder scheduled: 0 21 * * * Asia/Manila");
-	console.log("[CRON] Daily streak reset scheduled: 0 0 * * * Asia/Manila");
+	console.log(`[CRON] Streak reminder scheduled: ${STREAK_REMINDER_CRON} ${STREAK_JOB_TIMEZONE}`);
+	console.log(`[CRON] Daily streak reset scheduled: ${DAILY_STREAK_RESET_CRON} ${STREAK_JOB_TIMEZONE}`);
 };

@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS streak_info;
+
 CREATE TABLE IF NOT EXISTS streak_info (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id TEXT NOT NULL UNIQUE REFERENCES profiles(id) ON DELETE CASCADE,

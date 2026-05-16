@@ -83,8 +83,8 @@ Implement the complete STASIS backend across all core modules: authentication, o
 ## Implementation Decisions
 
 ### Dependency Installation
-- Install: `socket.io`, `passport`, `passport-google-oauth20`, `express-session`, `connect-pg-simple`, `multer`, `@anthropic-ai/sdk`, `express-rate-limit`, `pdf-parse`, `mammoth`, `node-cron`, `nodemailer`
-- Install types: `@types/passport`, `@types/passport-google-oauth20`, `@types/express-session`, `@types/multer`, `@types/pdf-parse`, `@types/mammoth`, `@types/node-cron`, `@types/nodemailer`
+- Install: `socket.io`, `passport`, `passport-google-oauth20`, `express-session`, `connect-pg-simple`, `multer`, `@anthropic-ai/sdk`, `express-rate-limit`, `pdf-parse`, `mammoth`, `node-cron`, `resend`
+- Install types: `@types/passport`, `@types/passport-google-oauth20`, `@types/express-session`, `@types/multer`, `@types/pdf-parse`, `@types/mammoth`, `@types/node-cron`
 
 ### Types Layer
 - Create `src/types/index.ts` with shared interfaces: `AuthenticatedRequest`, `EmotionFrame`, `InterventionPayload`, `CardStateUpdate`, `AdaptiveParams`
@@ -136,7 +136,7 @@ Implement the complete STASIS backend across all core modules: authentication, o
 ### Streak Reminder Cron Job
 - Use `node-cron` to schedule a job that runs every 3 hours (`0 */3 * * *`)
 - On each run, query all users whose `last_studied_date` is not today AND `streak_reminder_sent_date` is not today
-- For each matched user, send a streak reminder email via `nodemailer` with the subject "Don't break your streak!" and a prompt to log in before midnight
+- For each matched user, send a streak reminder email via `resend` with the subject "Don't break your streak!" and a prompt to log in before midnight
 - After sending, set `streak_reminder_sent_date = today` on the user's profile row to prevent duplicate emails for the rest of the day
 - When a user completes a study session and `last_studied_date` is updated to today, the cron query naturally excludes them — no further emails are sent
 - The cron job is initialized in `src/index.ts` alongside the HTTP server startup

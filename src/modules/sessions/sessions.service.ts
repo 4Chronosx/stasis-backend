@@ -2,6 +2,7 @@ import { db } from '../../config/db';
 import { scheduler } from '../../config/scheduler';
 import { Rating, type Card, type ReviewLog } from 'ts-fsrs';
 import type { Review } from './sessions.schema';
+import { incrementCompletedCards } from '../streaks/streaks.service';
 
 type CardRow = {
   id: number;
@@ -68,7 +69,7 @@ export async function loadSession(deckId: number) {
   })
 }
 
-export async function submitSession(reviews: Review[]) {
+export async function submitSession(reviews: Review[], profileId: string) {
   const cardIds = reviews.map(r => r.cardId)
   const { rows } = await db.query<CardRow>(
     `SELECT * FROM cards WHERE id = ANY($1)`,
@@ -138,7 +139,8 @@ export async function submitSession(reviews: Review[]) {
     client.release()
   }
 
-  // Future streak hook: once "completed flashcard" is defined, call
-  // recordCompletedCards(profileId, completedCount) from the streaks service here.
+  if (updates.length > 0) {
+    await incrementCompletedCards(profileId, updates.length);
+  }
   return { saved: updates.length }
 }

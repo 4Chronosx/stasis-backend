@@ -26,6 +26,13 @@ type PreferencesRow = {
   break_mechanic: string | null;
   show_timer: boolean | null;
   onboarding_completed: boolean;
+  privacy_comfort: string | null;
+  expression_tolerance: string | null;
+  study_block_length: number | null;
+  mini_breaks_per_session: number | null;
+  recovery_duration: number | null;
+  break_mechanic: string | null;
+  show_timer: boolean | null;
   onboarding_completed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -281,8 +288,10 @@ export const PreferencesService = {
       `INSERT INTO user_preferences (
         user_id, attention_score, adhd_score, stress_score,
         memory_score, speed_score, grit_score, motivation_score,
-        adaptive_params, onboarding_completed
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        adaptive_params, onboarding_completed, privacy_comfort,
+        expression_tolerance, study_block_length, mini_breaks_per_session,
+        recovery_duration, break_mechanic, show_timer
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *`,
       [
         userId,
@@ -295,15 +304,55 @@ export const PreferencesService = {
         data.motivation_score,
         JSON.stringify(data.adaptive_params),
         data.onboarding_completed,
+        data.privacy_comfort ?? null,
+        data.expression_tolerance ?? null,
+        data.study_block_length ?? null,
+        data.mini_breaks_per_session ?? null,
+        data.recovery_duration ?? null,
+        data.break_mechanic ?? null,
+        data.show_timer ?? true,
       ]
     );
     return rows[0] ?? null;
   },
 
-  async update(
-    userId: string,
-    data: UpdatePreferencesBody
-  ): Promise<PreferencesRow | null> {
+  async ensureForUser(userId: string): Promise<PreferencesRow | null> {
+    const { rows } = await db.query<PreferencesRow>(
+      `INSERT INTO user_preferences (user_id)
+      VALUES ($1)
+      ON CONFLICT (user_id) DO UPDATE SET user_id = EXCLUDED.user_id
+      RETURNING *`,
+      [userId]
+    );
+    return rows[0] ?? null;
+  },
+
+  async getCompletionStatus(userId: string): Promise<boolean> {
+    const { rows } = await db.query<Pick<PreferencesRow, "onboarding_completed">>(
+      `SELECT onboarding_completed FROM user_preferences WHERE user_id = $1`,
+      [userId]
+    );
+    return rows[0]?.onboarding_completed ?? false;
+  },
+
+  async markOnboardingCompleted(userId: string): Promise<PreferencesRow | null> {
+    const preferences = await this.ensureForUser(userId);
+
+    if (!preferences) {
+      return null;
+    }
+
+    const { rows } = await db.query<PreferencesRow>(
+      `UPDATE user_preferences
+      SET onboarding_completed = TRUE, updated_at = NOW()
+      WHERE user_id = $1
+      RETURNING *`,
+      [userId]
+    );
+    return rows[0] ?? null;
+  },
+
+  async update(userId: string, data: UpdatePreferencesBody): Promise<PreferencesRow | null> {
     const fields: string[] = [];
     const values: unknown[] = [];
     let index = 1;
@@ -318,6 +367,13 @@ export const PreferencesService = {
       motivation_score: "motivation_score",
       adaptive_params: "adaptive_params",
       onboarding_completed: "onboarding_completed",
+      privacy_comfort: "privacy_comfort",
+      expression_tolerance: "expression_tolerance",
+      study_block_length: "study_block_length",
+      mini_breaks_per_session: "mini_breaks_per_session",
+      recovery_duration: "recovery_duration",
+      break_mechanic: "break_mechanic",
+      show_timer: "show_timer",
     };
 
     for (const [key, column] of Object.entries(columnMap)) {

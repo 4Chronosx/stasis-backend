@@ -9,7 +9,7 @@ import { registerEmotionHandlers } from "./modules/emotion/emotion.socket";
 
 type SocketSessionRequest = IncomingMessage & {
 	session?: {
-		user?: unknown;
+		user?: { userId: string };
 	};
 };
 
@@ -47,7 +47,9 @@ export const initializeSocket = (
 	});
 
 	io.on("connection", (socket) => {
-		registerEmotionHandlers(io, socket, emotionSessions);
+		const req    = socket.request as SocketSessionRequest;
+		const userId = req.session!.user!.userId;
+		registerEmotionHandlers(io, socket, emotionSessions, userId);
 	});
 
 	return io;

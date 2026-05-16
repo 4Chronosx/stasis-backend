@@ -1,12 +1,8 @@
 import { URLSearchParams } from "node:url";
-
-interface AuthorizationCodeTokenRequest {
-    code: string,
-    client_id: string,
-    client_secret: string,
-    redirect_uri: string,
-    grant_type: 'authorization_code';
-}
+import {
+    authorizationCodeTokenRequestSchema,
+    type AuthorizationCodeTokenRequest,
+} from "../auth.schema";
 
 export const AuthService = {
     generateUrl: (params: URLSearchParams) => {
@@ -14,6 +10,8 @@ export const AuthService = {
     },
 
     exchangeCode: async (tokenRequest: AuthorizationCodeTokenRequest) => {
+        authorizationCodeTokenRequestSchema.parse(tokenRequest);
+
         const response = await fetch("https://oauth2.googleapis.com/token", {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

@@ -1,10 +1,10 @@
 import { google_ai } from "../../config/google";
 
-export interface GeneratedDeck {
+export type GeneratedDeck = {
 	name: string;
 	description: string;
 	cards: { question: string; answer: string }[];
-}
+};
 
 /**
  * Sends a PDF to the Gemini API and returns generated flashcard data.

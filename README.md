@@ -82,7 +82,7 @@ Traditional study tools are static — they don't respond to how you're actually
   <a href="https://socket.io/"><img alt="Socket.io" src="https://img.shields.io/badge/Socket.io-010101?logo=socketdotio&logoColor=white&style=flat" /></a>
   <a href="https://www.passportjs.org/"><img alt="Passport.js" src="https://img.shields.io/badge/Passport.js-34E27A?logo=passport&logoColor=white&style=flat" /></a>
   <a href="https://www.npmjs.com/package/node-cron"><img alt="node-cron" src="https://img.shields.io/badge/node--cron-339933?logo=node.js&logoColor=white&style=flat" /></a>
-  <a href="https://nodemailer.com/"><img alt="Nodemailer" src="https://img.shields.io/badge/Nodemailer-22B8F0?logo=gmail&logoColor=white&style=flat" /></a>
+  <a href="https://resend.com/"><img alt="Resend" src="https://img.shields.io/badge/Resend-000000?style=flat" /></a>
   <a href="https://vercel.com/"><img alt="Vercel" src="https://img.shields.io/badge/Vercel-232323?logo=vercel&logoColor=white&style=flat" /></a>
   <a href="https://render.com/"><img alt="Render" src="https://img.shields.io/badge/Render-46E3B7?logo=render&logoColor=white&style=flat" /></a>
 </p>
@@ -100,7 +100,7 @@ Follow these steps to set up and run **STASIS** locally.
 - [Supabase](https://supabase.com/) account and project
 - [Anthropic API key](https://www.anthropic.com/)
 - [Google OAuth credentials](https://console.cloud.google.com/)
-- A configured email account for Nodemailer (e.g. Gmail with an app password)
+- A Resend account with an API key and a verified sender address
 
 ### 🛠️ Installation
 
@@ -156,11 +156,9 @@ ANTHROPIC_API_KEY=
 # Session
 SESSION_SECRET=
 
-# Email (Nodemailer)
-SMTP_HOST=
-SMTP_PORT=
-SMTP_USER=
-SMTP_PASS=
+# Email (Resend)
+RESEND_API_KEY=
+RESEND_FROM=
 
 # Frontend
 CLIENT_URL=http://localhost:3001
@@ -237,7 +235,7 @@ stasis/
     │       ├── emotion/              # Socket.io event handlers, emotion buffer, intervention rule engine
     │       ├── adaptive/             # Difficulty recommendations
     │       ├── dashboard/            # Stats aggregation, 7-day activity history, streak logic
-    │       ├── notifications/        # Streak reminder cron (node-cron + nodemailer, every 3 hours)
+    │       ├── notifications/        # Streak reminder cron (node-cron + Resend, every 3 hours)
     │       └── settings/             # Timer, camera, notification settings
     └── supabase/
         └── migrations/               # Database migration files

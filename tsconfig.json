@@ -2,20 +2,17 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
-
     "module": "commonjs",
     "target": "esnext",
-    "lib": ["esnext"],
-    "types": ["node"],
-
+    "lib": [
+      "esnext"
+    ],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-
     "isolatedModules": true,
     "moduleDetection": "force",
     "skipLibCheck": true,

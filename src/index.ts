@@ -86,9 +86,6 @@ app.get("/", (_req: Request, res: Response) => {
 });
 
 // TODO: wire routes here
-// app.use("/api/auth", authRoutes);
-// app.use("/api/flashcards", flashcardsRoutes);
-// ...
 app.use("/auth", authRoutes);
 app.use("/api", (_req: Request, res: Response) => {
 	res.status(501).json({

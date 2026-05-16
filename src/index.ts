@@ -12,6 +12,7 @@ import cardsRouter from "./modules/cards/cards.routes";
 import sessionsRouter from "./modules/sessions/sessions.routes";
 import emotionRouter from "./modules/emotion/emotion.routes";
 import interventionRouter from "./modules/intervention/intervention.routes";
+import onboardingRouter from "./modules/onboarding/onboarding.routes";
 import { hydrateRequestSession } from "./middleware/auth.middleware";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
 import { rateLimiter } from "./middleware/rateLimiter.middleware";
@@ -87,6 +88,7 @@ app.get("/", (_req: Request, res: Response) => {
 
 // TODO: wire routes here
 app.use("/auth", authRoutes);
+app.use(onboardingRouter);
 app.use("/api", (_req: Request, res: Response) => {
 	res.status(501).json({
 		message: "API routes are not wired yet.",

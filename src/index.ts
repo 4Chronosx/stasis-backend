@@ -14,7 +14,6 @@ import emotionRouter from "./modules/emotion/emotion.routes";
 import preferencesRouter from "./modules/preferences/preferences.routes";
 import interventionRouter from "./modules/intervention/intervention.routes";
 import onboardingRouter from "./modules/onboarding/onboarding.routes";
-
 import { hydrateRequestSession } from "./middleware/auth.middleware";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
 import { rateLimiter } from "./middleware/rateLimiter.middleware";

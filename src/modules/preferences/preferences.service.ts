@@ -347,7 +347,6 @@ export const PreferencesService = {
   },
 
   async update(userId: string, data: UpdatePreferencesBody): Promise<PreferencesRow | null> {
-
     const fields: string[] = [];
     const values: unknown[] = [];
     let index = 1;

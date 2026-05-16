@@ -24,8 +24,9 @@ export async function createDeck(
   cardCount: number,
   userId: string,
   name?: string,
+  description?: string,
 ) {
-  const generated = await generateDeck(pdfBuffer, cardCount, name);
+  const generated = await generateDeck(pdfBuffer, cardCount, name, description);
 
   const { rows } = await db.query<DeckRow>(
     `INSERT INTO decks (name, description, user_id) VALUES ($1, $2, $3) RETURNING *`,
@@ -59,4 +60,16 @@ export async function getDeck(id: number, userId: string) {
 
 export async function deleteDeck(id: number) {
   await db.query(`DELETE FROM decks WHERE id = $1`, [id]);
+}
+
+export async function updateDeck(
+  id: number,
+  name: string,
+  description: string,
+) {
+  const { rows } = await db.query<DeckRow>(
+    `UPDATE decks SET name = $1, description = $2, updated_at = NOW() WHERE id = $3 RETURNING *`,
+    [name, description, id],
+  );
+  return rows[0] ?? null;
 }
